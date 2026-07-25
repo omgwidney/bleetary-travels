@@ -20,6 +20,7 @@
     "emulators:export": "firebase emulators:export .firebase/emulator-data"
   },
   "dependencies": {
+    "@next/env": "16.2.11",
     "firebase": "^12.16.0",
     "firebase-admin": "^14.2.0",
     "lucide-react": "^1.26.0",

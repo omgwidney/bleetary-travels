@@ -109,13 +109,20 @@ The complete collection and ownership contract is documented in
   reason, create an audit event, and revoke existing refresh tokens.
 - Password reset and logout are fully implemented.
 
-Firebase deliberately has no self-service first-admin path. After registering
-and verifying the initial administrator account, configure Admin credentials
-and run:
+Firebase deliberately has no self-service first-admin path. First register and
+verify the intended administrator through the application, then run the command
+using that account's real email address. The bootstrap script loads `.env.local`
+automatically:
 
 ```bash
 BOOTSTRAP_ADMIN_EMAIL=admin@example.com npm run admin:bootstrap
 ```
+
+When `NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true`, the command connects to the
+default local Auth and Firestore emulator ports and uses the demo project from
+`.firebaserc` (or `FIREBASE_EMULATOR_PROJECT_ID` when set). For a real Firebase
+project, set that flag to `false` and configure `FIREBASE_ADMIN_PROJECT_ID`,
+`FIREBASE_ADMIN_CLIENT_EMAIL`, and `FIREBASE_ADMIN_PRIVATE_KEY` in `.env.local`.
 
 The command records an audit event and revokes existing sessions. Later role
 changes should use the authenticated admin endpoint.
