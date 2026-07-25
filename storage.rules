@@ -2,6 +2,55 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.role == "admin";
+    }
+
+    function isHost() {
+      return signedIn() && request.auth.token.role == "host";
+    }
+
+    function isSupportedImage(maxBytes) {
+      return request.resource != null &&
+        request.resource.size > 0 &&
+        request.resource.size <= maxBytes &&
+        request.resource.contentType.matches("image/(jpeg|png|webp)");
+    }
+
+    match /published/{category}/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /private/{category}/{fileName} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /users/{userId}/profile/{fileName} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if
+        signedIn() &&
+        request.auth.uid == userId &&
+        isSupportedImage(5 * 1024 * 1024);
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /hosts/{hostId}/{category}/{fileName} {
+      allow read: if
+        signedIn() &&
+        (request.auth.uid == hostId || isAdmin());
+      allow create, update: if
+        isHost() &&
+        request.auth.uid == hostId &&
+        isSupportedImage(10 * 1024 * 1024);
+      allow delete: if isHost() && request.auth.uid == hostId;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

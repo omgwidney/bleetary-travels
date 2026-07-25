@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { LayoutDashboard, LogOut, Settings, User, Users } from "lucide-react";
+import { LayoutDashboard, Settings, User, Users } from "lucide-react";
 import Brand from "@/components/Brand";
+import LogoutButton from "@/components/auth/LogoutButton";
 
 const navigation = [
   {
@@ -11,13 +12,13 @@ const navigation = [
   },
   {
     label: "Profile",
-    href: "/coming-soon",
+    href: "/account",
     icon: User,
     active: false,
   },
   {
     label: "Account",
-    href: "/coming-soon",
+    href: "/account",
     icon: Settings,
     active: false,
   },
@@ -27,15 +28,23 @@ const navigation = [
     icon: Users,
     active: false,
   },
-  {
-    label: "Log Out",
-    href: "/coming-soon",
-    icon: LogOut,
-    active: false,
-  },
 ];
 
-export function HostSidebar() {
+function initials(displayName: string): string {
+  return displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+interface HostNavigationUser {
+  displayName: string;
+  email: string;
+}
+
+export function HostSidebar({ user }: { user: HostNavigationUser }) {
   return (
     <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-r border-gray-100 min-h-screen sticky top-0">
       <div className="px-6 py-5 border-b border-gray-100">
@@ -45,10 +54,10 @@ export function HostSidebar() {
       <div className="px-6 py-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#13b5b1] to-[#0d9b97] flex items-center justify-center text-white font-bold text-sm">
-            WN
+            {initials(user.displayName)}
           </div>
           <div>
-            <p className="text-sm font-bold text-gray-900">Widney N.</p>
+            <p className="text-sm font-bold text-gray-900">{user.displayName}</p>
             <p className="text-xs text-[#13b5b1] font-semibold">
               Host · Account Created 🎉
             </p>
@@ -65,9 +74,7 @@ export function HostSidebar() {
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${
               active
                 ? "bg-[#13b5b1]/10 text-[#0d9b97] font-semibold"
-                : label === "Log Out"
-                  ? "text-red-500 hover:bg-red-50"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
             <Icon
@@ -75,14 +82,13 @@ export function HostSidebar() {
               className={`shrink-0 transition-colors ${
                 active
                   ? "text-[#13b5b1]"
-                  : label === "Log Out"
-                    ? "text-red-400"
-                    : "text-gray-400 group-hover:text-gray-600"
+                  : "text-gray-400 group-hover:text-gray-600"
               }`}
             />
             {label}
           </Link>
         ))}
+        <LogoutButton className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-500 transition-all hover:bg-red-50" />
       </nav>
 
       <div className="px-4 pb-6">
@@ -110,7 +116,7 @@ const mobileNavigation = [
   { label: "Itineraries", href: "/coming-soon" },
 ];
 
-export function HostMobileNavigation() {
+export function HostMobileNavigation({ user }: { user: HostNavigationUser }) {
   return (
     <header className="lg:hidden bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="flex items-center justify-between px-4 h-14">
@@ -123,7 +129,7 @@ export function HostMobileNavigation() {
             Refer a Host
           </Link>
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#13b5b1] to-[#0d9b97] flex items-center justify-center text-white text-xs font-bold">
-            WN
+            {initials(user.displayName)}
           </div>
         </div>
       </div>

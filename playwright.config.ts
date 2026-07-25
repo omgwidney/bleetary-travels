@@ -19,6 +19,10 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      ...process.env,
+      NEXT_DIST_DIR: ".next-e2e",
+    },
   },
   projects: [
     {

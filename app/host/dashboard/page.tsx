@@ -15,19 +15,16 @@ import {
   HostMobileNavigation,
   HostSidebar,
 } from "@/components/host/HostNavigation";
+import { requireRole } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Host Dashboard — Bleetary Travels",
   description: "Manage your trips, track rewards, and grow your hosting community.",
 };
 
-const REFERRAL_LINK =
-  "https://bleetary.com/public/l/referral/widney-nhandara";
-const SURVEY_LINK = "https://bleetary.com/survey/widney-nhandara";
-
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function RewardsSummary() {
+function RewardsSummary({ referralLink }: { referralLink: string }) {
   const stats = [
     {
       label: "Total Referrals",
@@ -70,11 +67,11 @@ function RewardsSummary() {
             <div className="flex-1 min-w-0 flex items-center gap-2 bg-white/15 border border-white/30 rounded-xl px-3 py-2.5">
               <Link2 size={14} className="text-white/70 shrink-0" />
               <span className="text-white text-xs font-mono truncate select-all">
-                {REFERRAL_LINK}
+                {referralLink}
               </span>
             </div>
             <CopyLinkButton
-              value={REFERRAL_LINK}
+              value={referralLink}
               className="flex items-center gap-1.5 bg-[#f05c40] hover:bg-[#d94e34] text-white text-xs font-bold px-3 py-2.5 rounded-xl transition-all duration-200 shadow-[0_2px_8px_rgba(240,92,64,0.35)] hover:shadow-[0_4px_14px_rgba(240,92,64,0.45)] hover:-translate-y-0.5 shrink-0"
             />
           </div>
@@ -121,7 +118,7 @@ function RewardsSummary() {
           You don&apos;t have any referrals right now. Share your link and start earning!
         </p>
         <CopyLinkButton
-          value={REFERRAL_LINK}
+          value={referralLink}
           label="Share My Link"
           className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#13b5b1] border border-[#13b5b1] hover:bg-[#13b5b1] hover:text-white px-4 py-2 rounded-full transition-all duration-200"
         />
@@ -130,7 +127,7 @@ function RewardsSummary() {
   );
 }
 
-function GatherInterestWidget() {
+function GatherInterestWidget({ surveyLink }: { surveyLink: string }) {
   return (
     <section className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
       {/* Header */}
@@ -177,10 +174,10 @@ function GatherInterestWidget() {
           <div className="flex items-center gap-2">
             <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2.5">
               <Link2 size={13} className="text-gray-400 shrink-0" />
-              <span className="text-xs text-gray-600 font-mono truncate">{SURVEY_LINK}</span>
+              <span className="text-xs text-gray-600 font-mono truncate">{surveyLink}</span>
             </div>
             <CopyLinkButton
-              value={SURVEY_LINK}
+              value={surveyLink}
               className="flex items-center gap-1.5 bg-[#f05c40] hover:bg-[#d94e34] text-white text-xs font-bold px-3 py-2.5 rounded-lg transition-all duration-200 hover:-translate-y-0.5 shadow-[0_2px_8px_rgba(240,92,64,0.3)] shrink-0"
             />
           </div>
@@ -286,13 +283,18 @@ function LaunchSteps() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function HostDashboardPage() {
+export default async function HostDashboardPage() {
+  const session = await requireRole(["host", "admin"], "/host/dashboard");
+  const firstName = session.displayName.split(/\s+/)[0];
+  const referralLink = `https://bleetary.com/public/l/referral/${session.uid}`;
+  const surveyLink = `https://bleetary.com/survey/${session.uid}`;
+
   return (
     <div className="min-h-screen bg-[#f4f5f7] flex">
-      <HostSidebar />
+      <HostSidebar user={session} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <HostMobileNavigation />
+        <HostMobileNavigation user={session} />
 
         {/* Main content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
@@ -300,7 +302,7 @@ export default function HostDashboardPage() {
             {/* Page heading */}
             <div>
               <h1 className="text-2xl font-black text-gray-900">
-                Welcome back, Widney 👋
+                Welcome back, {firstName} 👋
               </h1>
               <p className="text-gray-500 text-sm mt-1">
                 Here&apos;s everything you need to launch your first Bleetary trip.
@@ -312,12 +314,12 @@ export default function HostDashboardPage() {
               {/* Left main column */}
               <div className="xl:col-span-2 space-y-6">
                 <LaunchSteps />
-                <GatherInterestWidget />
+                <GatherInterestWidget surveyLink={surveyLink} />
               </div>
 
               {/* Right sidebar column */}
               <div className="space-y-6 min-w-0">
-                <RewardsSummary />
+                <RewardsSummary referralLink={referralLink} />
 
                 {/* Important Dates widget */}
                 <div className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] border border-gray-100 p-6">

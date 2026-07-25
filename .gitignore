@@ -15,6 +15,8 @@
 
 # next.js
 /.next/
+/.next-e2e/
+/.next-auth-e2e/
 /out/
 
 # production
@@ -37,6 +39,7 @@ yarn-error.log*
 
 # firebase emulator state
 /.firebase/
+/*-debug.log
 
 # browser test output
 /playwright-report/
