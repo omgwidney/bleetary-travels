@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CheckCircle, Loader2, ChevronLeft, Users, Briefcase, TrendingUp, Compass } from "lucide-react";
 import { saveHostLead } from "@/lib/firebase";
 
@@ -312,12 +313,12 @@ export default function HostQuiz() {
                 We&apos;ll send your personalised hosting guide and survey link to{" "}
                 <strong className="text-gray-800">{data.email}</strong> shortly.
               </p>
-              <a
+              <Link
                 href="/"
                 className="inline-flex items-center gap-2 mt-8 bg-[#13b5b1] hover:bg-[#0d9b97] text-white font-bold px-7 py-3.5 rounded-full transition-all duration-200"
               >
                 Explore Trips
-              </a>
+              </Link>
             </div>
           )}
         </div>

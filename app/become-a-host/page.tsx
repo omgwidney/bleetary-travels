@@ -1,7 +1,6 @@
 import HostQuiz from "@/components/HostQuiz";
+import Brand from "@/components/Brand";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { MapPin } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Become a Host — Bleetary Travels",
@@ -14,14 +13,7 @@ export default function BecomeAHostPage() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Minimal header */}
       <header className="border-b border-gray-100 py-4 px-6">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[#13b5b1] flex items-center justify-center">
-            <MapPin size={14} className="text-white" />
-          </div>
-          <span className="text-xl font-black tracking-tight text-gray-900">
-            bleetary<span className="text-[#13b5b1]">.</span>
-          </span>
-        </Link>
+        <Brand compact />
       </header>
 
       {/* Quiz */}

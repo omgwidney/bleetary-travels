@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bleetary Travels
 
-## Getting Started
+Bleetary Travels is a community-led group travel marketplace. This repository
+currently contains the Phase 0 engineering baseline: the public prototype, host
+lead quiz, host dashboard preview, shared UI primitives, a static searchable
+catalog, Firebase client integration, and local/CI quality tooling.
 
-First, run the development server:
+## Requirements
+
+- Node.js 22 LTS
+- npm 10 or newer
+- Java 21 or newer when running the Firebase Emulator Suite
+- A Firebase web application for live lead collection
+
+## Local setup
+
+1. Install dependencies:
+
+   ```bash
+   npm ci
+   ```
+
+2. Copy the environment template:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+3. Replace every Firebase placeholder in `.env.local` with the web SDK values
+   for the intended development project.
+
+4. Start Next.js:
+
+   ```bash
+   npm run dev
+   ```
+
+The application is available at [http://localhost:3000](http://localhost:3000).
+
+## Environment strategy
+
+- `.env.local`: developer-specific Firebase project; never committed.
+- `.env.test`: deterministic non-secret values used by unit tests.
+- Vercel Preview: staging Firebase values configured in project settings.
+- Vercel Production: production Firebase values configured in project settings.
+
+The application validates required public Firebase variables on initialization
+and fails with a targeted configuration error when values are missing.
+
+## Quality commands
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run typecheck
+npm run test
+npm run test:e2e
+npm run build
+npm run check
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run check` runs lint, TypeScript, and unit/component tests. Playwright
+starts the app on port 3100 for browser smoke tests.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Firebase emulators
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.firebaserc.example` to `.firebaserc`, replace the project ID, then run:
 
-## Learn More
+```bash
+npm run emulators
+```
 
-To learn more about Next.js, take a look at the following resources:
+The configured local ports are:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Emulator UI: `4000`
+- Firestore: `8080`
+- Authentication: `9099`
+- Storage: `9199`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The Phase 0 Firestore rules allow validated public creation of `host_leads` and
+deny all other client access. Storage is denied until authenticated asset flows
+are implemented.
 
-## Deploy on Vercel
+## Current routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `/` — public landing page
+- `/trips` — searchable prototype catalog
+- `/trips/[slug]` — prototype trip preview
+- `/become-a-host` — host qualification and lead form
+- `/host/dashboard` — host dashboard preview
+- `/coming-soon` — safe destination for later-phase workflows
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Unknown URLs render the branded application 404.
+
+## Continuous integration
+
+GitHub Actions runs lint, type checking, unit/component tests, production build,
+and Chromium smoke tests. Once a GitHub remote is connected, apply the rules in
+[`.github/BRANCH_PROTECTION.md`](.github/BRANCH_PROTECTION.md) to `main`.
+
+## Phase boundaries
+
+Phase 0 deliberately does not claim production authentication, booking,
+payments, host operations, or administration. Those workflows remain visible
+as previews or route to the coming-soon page until their server-side contracts
+and security controls are implemented.

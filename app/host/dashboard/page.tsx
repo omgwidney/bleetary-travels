@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  MapPin,
-  User,
   Settings,
   Users,
-  LogOut,
-  Copy,
-  Gift,
   CheckCircle2,
   DollarSign,
   Link2,
@@ -15,96 +10,20 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
+import CopyLinkButton from "@/components/host/CopyLinkButton";
+import {
+  HostMobileNavigation,
+  HostSidebar,
+} from "@/components/host/HostNavigation";
 
 export const metadata: Metadata = {
   title: "Host Dashboard — Bleetary Travels",
   description: "Manage your trips, track rewards, and grow your hosting community.",
 };
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
-
-const NAV_ITEMS = [
-  { label: "Profile",       href: "/host/profile",   icon: User,     active: false },
-  { label: "Account",       href: "/host/account",   icon: Settings, active: false },
-  { label: "Refer a Host",  href: "/host/refer",     icon: Users,    active: true  },
-  { label: "Log Out",       href: "/logout",         icon: LogOut,   active: false },
-];
-
-function Sidebar() {
-  return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-r border-gray-100 min-h-screen sticky top-0">
-      {/* Logo */}
-      <div className="px-6 py-5 border-b border-gray-100">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[#13b5b1] flex items-center justify-center">
-            <MapPin size={14} className="text-white" />
-          </div>
-          <span className="text-lg font-black tracking-tight text-gray-900">
-            bleetary<span className="text-[#13b5b1]">.</span>
-          </span>
-        </Link>
-      </div>
-
-      {/* Host badge */}
-      <div className="px-6 py-4 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#13b5b1] to-[#0d9b97] flex items-center justify-center text-white font-bold text-sm">
-            WN
-          </div>
-          <div>
-            <p className="text-sm font-bold text-gray-900">Widney N.</p>
-            <p className="text-xs text-[#13b5b1] font-semibold">Host · Account Created 🎉</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Nav items */}
-      <nav className="flex-1 py-4 px-3 space-y-1">
-        {NAV_ITEMS.map(({ label, href, icon: Icon, active }) => (
-          <Link
-            key={label}
-            href={href}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group ${
-              active
-                ? "bg-[#13b5b1]/10 text-[#0d9b97] font-semibold"
-                : label === "Log Out"
-                ? "text-red-500 hover:bg-red-50"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            <Icon
-              size={18}
-              className={`shrink-0 transition-colors ${
-                active
-                  ? "text-[#13b5b1]"
-                  : label === "Log Out"
-                  ? "text-red-400"
-                  : "text-gray-400 group-hover:text-gray-600"
-              }`}
-            />
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      {/* Help card */}
-      <div className="px-4 pb-6">
-        <div className="bg-[#f4f5f7] rounded-2xl p-4">
-          <p className="text-xs font-bold text-gray-700 mb-1">Need help?</p>
-          <p className="text-xs text-gray-500 mb-3">
-            Our host team is here Monday–Friday, 9 am–6 pm EST.
-          </p>
-          <Link
-            href="/help"
-            className="inline-flex text-xs font-semibold text-[#13b5b1] hover:text-[#0d9b97] transition-colors"
-          >
-            Visit Help Center →
-          </Link>
-        </div>
-      </div>
-    </aside>
-  );
-}
+const REFERRAL_LINK =
+  "https://bleetary.com/public/l/referral/widney-nhandara";
+const SURVEY_LINK = "https://bleetary.com/survey/widney-nhandara";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -151,19 +70,16 @@ function RewardsSummary() {
             <div className="flex-1 min-w-0 flex items-center gap-2 bg-white/15 border border-white/30 rounded-xl px-3 py-2.5">
               <Link2 size={14} className="text-white/70 shrink-0" />
               <span className="text-white text-xs font-mono truncate select-all">
-                https://bleetary.com/public/l/referral/widney-nhandara
+                {REFERRAL_LINK}
               </span>
             </div>
-            <button
-              id="copy-referral-link"
+            <CopyLinkButton
+              value={REFERRAL_LINK}
               className="flex items-center gap-1.5 bg-[#f05c40] hover:bg-[#d94e34] text-white text-xs font-bold px-3 py-2.5 rounded-xl transition-all duration-200 shadow-[0_2px_8px_rgba(240,92,64,0.35)] hover:shadow-[0_4px_14px_rgba(240,92,64,0.45)] hover:-translate-y-0.5 shrink-0"
-            >
-              <Copy size={14} />
-              Copy
-            </button>
+            />
           </div>
           <Link
-            href="/host/refer"
+            href="/coming-soon"
             className="inline-block mt-2 text-white/70 hover:text-white text-xs underline underline-offset-2 transition-colors"
           >
             Learn More
@@ -204,20 +120,17 @@ function RewardsSummary() {
         <p className="text-xs text-gray-400 max-w-xs">
           You don&apos;t have any referrals right now. Share your link and start earning!
         </p>
-        <button
-          id="share-referral-link-btn"
+        <CopyLinkButton
+          value={REFERRAL_LINK}
+          label="Share My Link"
           className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#13b5b1] border border-[#13b5b1] hover:bg-[#13b5b1] hover:text-white px-4 py-2 rounded-full transition-all duration-200"
-        >
-          <Copy size={14} /> Share My Link
-        </button>
+        />
       </div>
     </section>
   );
 }
 
 function GatherInterestWidget() {
-  const SURVEY_LINK = "https://bleetary.com/survey/widney-nhandara";
-
   return (
     <section className="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.06)] border border-gray-100 overflow-hidden">
       {/* Header */}
@@ -266,13 +179,10 @@ function GatherInterestWidget() {
               <Link2 size={13} className="text-gray-400 shrink-0" />
               <span className="text-xs text-gray-600 font-mono truncate">{SURVEY_LINK}</span>
             </div>
-            <button
-              id="copy-survey-link"
+            <CopyLinkButton
+              value={SURVEY_LINK}
               className="flex items-center gap-1.5 bg-[#f05c40] hover:bg-[#d94e34] text-white text-xs font-bold px-3 py-2.5 rounded-lg transition-all duration-200 hover:-translate-y-0.5 shadow-[0_2px_8px_rgba(240,92,64,0.3)] shrink-0"
-            >
-              <Copy size={13} />
-              Copy
-            </button>
+            />
           </div>
           <p className="text-[11px] text-gray-400">
             Share this link on your social channels, newsletter, or with your community directly.
@@ -280,55 +190,16 @@ function GatherInterestWidget() {
         </div>
 
         {/* CTA */}
-        <button
+        <Link
+          href="/coming-soon"
           id="start-surveying-btn"
           className="w-full flex items-center justify-center gap-2 bg-[#f05c40] hover:bg-[#d94e34] text-white font-bold py-3 rounded-xl text-sm transition-all duration-200 shadow-[0_4px_14px_rgba(240,92,64,0.3)] hover:shadow-[0_6px_20px_rgba(240,92,64,0.4)] hover:-translate-y-0.5"
         >
           <BarChart3 size={16} />
           Start Surveying +
-        </button>
+        </Link>
       </div>
     </section>
-  );
-}
-
-function MobileNav() {
-  return (
-    <header className="lg:hidden bg-white border-b border-gray-100 sticky top-0 z-50">
-      <div className="flex items-center justify-between px-4 h-14">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[#13b5b1] flex items-center justify-center">
-            <MapPin size={14} className="text-white" />
-          </div>
-          <span className="text-lg font-black tracking-tight text-gray-900">
-            bleetary<span className="text-[#13b5b1]">.</span>
-          </span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/host/refer"
-            className="text-xs font-bold border border-[#13b5b1] text-[#13b5b1] px-3 py-1.5 rounded-full hover:bg-[#13b5b1] hover:text-white transition-all"
-          >
-            Refer a Host
-          </Link>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#13b5b1] to-[#0d9b97] flex items-center justify-center text-white text-xs font-bold">
-            WN
-          </div>
-        </div>
-      </div>
-      {/* Mobile sub-nav */}
-      <nav className="flex gap-0 border-t border-gray-100 overflow-x-auto">
-        {["Home", "My Trips", "Email List", "Itineraries"].map((item) => (
-          <Link
-            key={item}
-            href="#"
-            className="shrink-0 px-5 py-3 text-xs font-semibold text-gray-500 hover:text-[#13b5b1] border-b-2 border-transparent hover:border-[#13b5b1] transition-all whitespace-nowrap"
-          >
-            {item}
-          </Link>
-        ))}
-      </nav>
-    </header>
   );
 }
 
@@ -340,6 +211,7 @@ function LaunchSteps() {
       desc: "Discover destinations and itineraries your community will love.",
       locked: false,
       cta: "View Itineraries",
+      href: "/coming-soon",
     },
     {
       num: 2,
@@ -347,6 +219,7 @@ function LaunchSteps() {
       desc: "Collect 100 emails from people excited to travel with you.",
       locked: false,
       cta: "Collect or Upload Emails",
+      href: "/coming-soon",
     },
     {
       num: 3,
@@ -354,6 +227,7 @@ function LaunchSteps() {
       desc: "Lock in your dates and destination.",
       locked: true,
       cta: null,
+      href: null,
     },
     {
       num: 4,
@@ -361,6 +235,7 @@ function LaunchSteps() {
       desc: "Set the date you'll open bookings to your community.",
       locked: true,
       cta: null,
+      href: null,
     },
   ];
 
@@ -373,8 +248,8 @@ function LaunchSteps() {
       <div className="divide-y divide-gray-100">
         {steps.map((step) => (
           <div key={step.num} className="px-6 py-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-3 min-w-0">
                 <span
                   className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 ${
                     step.locked
@@ -393,10 +268,13 @@ function LaunchSteps() {
                   )}
                 </div>
               </div>
-              {step.cta && (
-                <button className="shrink-0 flex items-center gap-1.5 bg-[#f05c40] hover:bg-[#d94e34] text-white text-xs font-bold px-4 py-2 rounded-lg transition-all duration-200 hover:-translate-y-0.5 shadow-[0_2px_8px_rgba(240,92,64,0.25)]">
+              {step.cta && step.href && (
+                <Link
+                  href={step.href}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#f05c40] px-4 py-2 text-xs font-bold text-white shadow-[0_2px_8px_rgba(240,92,64,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#d94e34] sm:w-auto sm:shrink-0"
+                >
                   {step.cta} <ChevronRight size={13} />
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -411,10 +289,10 @@ function LaunchSteps() {
 export default function HostDashboardPage() {
   return (
     <div className="min-h-screen bg-[#f4f5f7] flex">
-      <Sidebar />
+      <HostSidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <MobileNav />
+        <HostMobileNavigation />
 
         {/* Main content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
@@ -469,7 +347,7 @@ export default function HostDashboardPage() {
                     Complete your profile and launch your first trip to level up and unlock higher rewards.
                   </p>
                   <Link
-                    href="/host/profile"
+                    href="/coming-soon"
                     className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 border border-white/30 text-white text-xs font-bold px-4 py-2 rounded-full transition-all duration-200"
                   >
                     Complete Profile <ChevronRight size={14} />

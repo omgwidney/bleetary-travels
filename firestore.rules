@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /host_leads/{leadId} {
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          "name",
+          "email",
+          "hasCommunity",
+          "communityStage",
+          "source",
+          "createdAt"
+        ]) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() > 3 &&
+        request.resource.data.email.size() <= 320 &&
+        request.resource.data.hasCommunity in ["yes", "no"] &&
+        request.resource.data.communityStage in [
+          "full-time",
+          "side-project",
+          "building",
+          "exploring"
+        ] &&
+        request.resource.data.source == "host_quiz" &&
+        request.resource.data.createdAt == request.time;
+
+      allow read, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

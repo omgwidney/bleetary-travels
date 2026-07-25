@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!.env.test
+
+# firebase emulator state
+/.firebase/
+
+# browser test output
+/playwright-report/
+/test-results/
 
 # vercel
 .vercel
