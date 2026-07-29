@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import DestinationCard from "@/components/DestinationCard";
-import SiteFooter from "@/components/SiteFooter";
-import SiteHeader from "@/components/SiteHeader";
-import TripCard from "@/components/TripCard";
+import Footer from "@/components/layout/Footer";
+import Nav from "@/components/layout/Nav";
+import TripCard from "@/components/trips/TripCard";
 import TripSearch from "@/components/TripSearch";
 import { destinations, trips } from "@/lib/catalog";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
-      <SiteHeader />
+      <Nav />
 
       <main>
         <section className="relative min-h-[88vh] flex flex-col items-start justify-center bg-gray-900">
@@ -152,7 +152,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <Footer />
     </div>
   );
 }

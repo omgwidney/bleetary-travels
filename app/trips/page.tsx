@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import SiteFooter from "@/components/SiteFooter";
-import SiteHeader from "@/components/SiteHeader";
-import TripCard from "@/components/TripCard";
+import Footer from "@/components/layout/Footer";
+import Nav from "@/components/layout/Nav";
+import TripCard from "@/components/trips/TripCard";
 import TripSearch from "@/components/TripSearch";
 import { filterTrips } from "@/lib/catalog";
 
@@ -24,7 +24,7 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
 
   return (
     <div className="min-h-screen bg-[#f4f5f7]">
-      <SiteHeader />
+      <Nav />
       <main>
         <section className="bg-gradient-to-br from-[#0d9b97] to-[#13b5b1] px-4 sm:px-6 py-16 text-center text-white">
           <p className="text-sm font-bold uppercase tracking-widest text-white/70 mb-3">
@@ -91,7 +91,7 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
           )}
         </section>
       </main>
-      <SiteFooter />
+      <Footer />
     </div>
   );
 }

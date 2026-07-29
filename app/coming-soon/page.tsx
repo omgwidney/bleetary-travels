@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Compass } from "lucide-react";
-import SiteFooter from "@/components/SiteFooter";
-import SiteHeader from "@/components/SiteHeader";
+import Footer from "@/components/layout/Footer";
+import Nav from "@/components/layout/Nav";
 
 export const metadata: Metadata = {
   title: "Coming Soon — Bleetary Travels",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function ComingSoonPage() {
   return (
     <div className="min-h-screen bg-[#f4f5f7] flex flex-col">
-      <SiteHeader />
+      <Nav />
       <main className="flex-1 flex items-center justify-center px-4 py-20">
         <div className="max-w-xl w-full bg-white rounded-3xl border border-gray-100 shadow-[0_12px_45px_rgba(0,0,0,0.08)] p-8 sm:p-12 text-center">
           <div className="w-16 h-16 rounded-2xl bg-[#13b5b1]/10 text-[#0d9b97] flex items-center justify-center mx-auto mb-6">
@@ -45,7 +45,7 @@ export default function ComingSoonPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
+      <Footer />
     </div>
   );
 }

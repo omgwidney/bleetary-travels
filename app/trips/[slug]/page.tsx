@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
 import { notFound } from "next/navigation";
-import SiteFooter from "@/components/SiteFooter";
-import SiteHeader from "@/components/SiteHeader";
+import Footer from "@/components/layout/Footer";
+import Nav from "@/components/layout/Nav";
 import { trips } from "@/lib/catalog";
 
 interface TripDetailPageProps {
@@ -42,13 +43,15 @@ export default async function TripDetailPage({
 
   return (
     <div className="min-h-screen bg-white">
-      <SiteHeader />
+      <Nav />
       <main>
         <section className="relative min-h-[58vh] flex items-end overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={trip.image}
             alt={trip.destination}
+            fill
+            sizes="100vw"
+            priority
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -111,7 +114,7 @@ export default async function TripDetailPage({
           </aside>
         </section>
       </main>
-      <SiteFooter />
+      <Footer />
     </div>
   );
 }

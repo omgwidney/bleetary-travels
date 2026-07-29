@@ -1,6 +1,6 @@
 import Link from "next/link";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
+import Nav from "@/components/layout/Nav";
+import Footer from "@/components/layout/Footer";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { requireSession } from "@/lib/auth/session";
 
@@ -9,7 +9,7 @@ export default async function AccountPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f5f7]">
-      <SiteHeader />
+      <Nav />
       <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
         <section className="rounded-3xl border border-gray-100 bg-white p-7 shadow-sm sm:p-10">
           <p className="text-sm font-bold uppercase tracking-widest text-[#13b5b1]">
@@ -58,7 +58,7 @@ export default async function AccountPage() {
           </div>
         </section>
       </main>
-      <SiteFooter />
+      <Footer />
     </div>
   );
 }
