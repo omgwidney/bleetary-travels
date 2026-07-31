@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,6 +15,8 @@ import {
   firebaseErrorMessage,
 } from "@/components/auth/auth-ui";
 
+const POLL_INTERVAL_MS = 4000;
+
 export default function VerifyEmailPanel({
   email,
   oobCode,
@@ -28,7 +30,9 @@ export default function VerifyEmailPanel({
   );
   const [error, setError] = useState("");
   const [pending, setPending] = useState(Boolean(oobCode));
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Apply action code from email link
   useEffect(() => {
     if (!oobCode) return;
 
@@ -49,6 +53,29 @@ export default function VerifyEmailPanel({
     };
   }, [oobCode]);
 
+  // Auto-poll when a user is signed in but unverified (verifying on another tab/device)
+  useEffect(() => {
+    if (oobCode) return; // don't poll if handling action code directly
+
+    pollingRef.current = setInterval(async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      try {
+        await user.reload();
+        if (user.emailVerified) {
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          setMessage("Email verified. Continue to your account.");
+        }
+      } catch {
+        // silently ignore transient reload errors during polling
+      }
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [oobCode]);
+
   async function continueToAccount() {
     setPending(true);
     setError("");
@@ -61,7 +88,9 @@ export default function VerifyEmailPanel({
 
       await user.reload();
       if (!user.emailVerified) {
-        setError("Verification is not complete yet. Open the link in your email.");
+        setError(
+          "Verification is not complete yet. Open the link in your email.",
+        );
         return;
       }
 
@@ -78,6 +107,7 @@ export default function VerifyEmailPanel({
       if (!response.ok || !payload.role) {
         throw new Error(payload.error ?? "Unable to create a session.");
       }
+      if (pollingRef.current) clearInterval(pollingRef.current);
       router.replace(roleHome(payload.role));
       router.refresh();
     } catch (caught) {
@@ -110,6 +140,7 @@ export default function VerifyEmailPanel({
   }
 
   async function useAnotherAccount() {
+    if (pollingRef.current) clearInterval(pollingRef.current);
     await signOut(auth);
     router.replace("/login");
   }
@@ -117,13 +148,41 @@ export default function VerifyEmailPanel({
   return (
     <div className="space-y-5">
       {error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
+        <p role="alert" className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </p>
       )}
-      <p role="status" className="rounded-xl bg-teal-50 p-4 text-sm text-teal-800">
-        {pending ? "Verifying your email…" : message}
+      <p role="status" className="rounded-xl border border-teal-100 bg-teal-50 p-4 text-sm text-teal-800">
+        {pending ? (
+          <span className="flex items-center gap-2">
+            <svg
+              className="h-4 w-4 animate-spin"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            Verifying your email…
+          </span>
+        ) : (
+          message
+        )}
       </p>
+
       <button
         type="button"
         onClick={continueToAccount}
@@ -132,8 +191,13 @@ export default function VerifyEmailPanel({
       >
         Continue
       </button>
+
       <div className="flex justify-between text-xs font-semibold">
-        <button type="button" onClick={resend} className="text-[#0d9b97] hover:underline">
+        <button
+          type="button"
+          onClick={resend}
+          className="text-[#0d9b97] hover:underline"
+        >
           Resend email
         </button>
         <button
@@ -144,6 +208,7 @@ export default function VerifyEmailPanel({
           Use another account
         </button>
       </div>
+
       <p className="text-center text-xs text-gray-400">
         Already verified?{" "}
         <Link href="/login" className="text-[#0d9b97] hover:underline">

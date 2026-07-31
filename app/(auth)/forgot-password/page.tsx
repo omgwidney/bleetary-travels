@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthCard
       title="Reset your password"
-      description="Enter your account email and Firebase will send a secure reset link."
+      description="Enter your account email and we'll send a secure reset link."
     >
       <PasswordResetForm />
     </AuthCard>
