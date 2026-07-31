@@ -2,6 +2,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ─── Auth helpers ───────────────────────────────────────────────────────
+
     function signedIn() {
       return request.auth != null;
     }
@@ -22,39 +25,46 @@ service cloud.firestore {
       return role() == "host";
     }
 
+    // ─── Document helpers ───────────────────────────────────────────────────
+
     function isPublished() {
       return resource.data.status == "published";
     }
 
+    /** Generic field ownership check. */
     function owns(field) {
       return signedIn() && resource.data[field] == uid();
     }
 
+    /**
+     * Host owns a record when their UID appears in either
+     * ownerUid (generic) or hostUid (booking/payment fields).
+     */
     function hostOwnsRecord() {
-      return isHost() &&
-        (
-          resource.data.ownerUid == uid() ||
-          resource.data.hostUid == uid()
-        );
+      return isHost() && (
+        resource.data.ownerUid == uid() ||
+        resource.data.hostUid  == uid()
+      );
     }
 
+    /**
+     * Traveler owns a record when their UID appears in either
+     * ownerUid (generic) or travelerUid (booking/payment fields).
+     */
     function travelerOwnsRecord() {
-      return signedIn() &&
-        (
-          resource.data.ownerUid == uid() ||
-          resource.data.travelerUid == uid()
-        );
+      return signedIn() && (
+        resource.data.ownerUid    == uid() ||
+        resource.data.travelerUid == uid()
+      );
     }
+
+    // ─── host_leads (Phase 0 quiz — anonymous create only) ─────────────────
 
     match /host_leads/{leadId} {
       allow create: if
         request.resource.data.keys().hasOnly([
-          "name",
-          "email",
-          "hasCommunity",
-          "communityStage",
-          "source",
-          "createdAt"
+          "name", "email", "hasCommunity",
+          "communityStage", "source", "createdAt"
         ]) &&
         request.resource.data.name is string &&
         request.resource.data.name.size() > 0 &&
@@ -64,10 +74,7 @@ service cloud.firestore {
         request.resource.data.email.size() <= 320 &&
         request.resource.data.hasCommunity in ["yes", "no"] &&
         request.resource.data.communityStage in [
-          "full-time",
-          "side-project",
-          "building",
-          "exploring"
+          "full-time", "side-project", "building", "exploring"
         ] &&
         request.resource.data.source == "host_quiz" &&
         request.resource.data.createdAt == request.time;
@@ -75,81 +82,145 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // ─── users ──────────────────────────────────────────────────────────────
+    // Users may only read their own document. Role & status are set
+    // exclusively by the server (Admin SDK). No client list access.
+
     match /users/{userId} {
-      allow get: if signedIn() && (uid() == userId || isAdmin());
-      allow list: if false;
+      allow get:    if signedIn() && (uid() == userId || isAdmin());
+      allow list:   if false;
       allow create, update, delete: if false;
     }
+
+    // ─── hostApplications ───────────────────────────────────────────────────
+    // Applicant can read their own submission. Never public.
+    // Server creates/updates via Admin SDK.
 
     match /hostApplications/{applicationId} {
-      allow read: if owns("ownerUid") || isAdmin();
+      allow get:    if owns("ownerUid") || isAdmin();
+      allow list:   if isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── hostProfiles ────────────────────────────────────────────────────────
+    // Published profiles are publicly readable (browseable catalog).
+    // Host can read their own draft. No client mutations.
 
     match /hostProfiles/{profileId} {
-      allow read: if isPublished() || owns("ownerUid") || isAdmin();
+      allow get:    if isPublished() || owns("ownerUid") || isAdmin();
+      allow list:   if isPublished() || isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── destinations ────────────────────────────────────────────────────────
+    // Published documents are publicly readable.
 
     match /destinations/{documentId} {
-      allow read: if isPublished() || isAdmin();
+      allow get:    if isPublished() || isAdmin();
+      allow list:   if isPublished() || isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── itineraries ─────────────────────────────────────────────────────────
+    // Published documents are public. The owning host can read their drafts.
 
     match /itineraries/{documentId} {
-      allow read: if isPublished() || hostOwnsRecord() || isAdmin();
+      allow get:    if isPublished() || hostOwnsRecord() || isAdmin();
+      allow list:   if isPublished() || isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── trips ───────────────────────────────────────────────────────────────
+    // Published documents are public (browseable catalog).
+    // The owning host can read their drafts.
 
     match /trips/{documentId} {
-      allow read: if isPublished() || hostOwnsRecord() || isAdmin();
+      allow get:    if isPublished() || hostOwnsRecord() || isAdmin();
+      allow list:   if isPublished() || isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── tripDepartures ──────────────────────────────────────────────────────
+    // Published departures are publicly readable.
+    // The owning host can read drafts for their trips.
 
     match /tripDepartures/{documentId} {
-      allow read: if isPublished() || hostOwnsRecord() || isAdmin();
+      allow get:    if isPublished() || hostOwnsRecord() || isAdmin();
+      // List requires published OR the requester is the host of this departure.
+      allow list:   if isPublished() || isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── interestResponses ────────────────────────────────────────────────────
+    // Host audience survey responses.
+    // The survey-owning host (ownerUid) can read their own responses.
+    // The authenticated respondent (travelerUid) can read their own response.
+    // Anonymous responses (travelerUid == null) are accessible only to the host.
+    // No client mutations — responses are created via server endpoint.
 
     match /interestResponses/{documentId} {
-      allow read: if travelerOwnsRecord() || hostOwnsRecord() || isAdmin();
+      allow get: if
+        owns("ownerUid") ||
+        (signedIn() && resource.data.travelerUid == uid()) ||
+        isAdmin();
+      allow list: if owns("ownerUid") || isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── bookings ────────────────────────────────────────────────────────────
 
     match /bookings/{documentId} {
-      allow read: if travelerOwnsRecord() || hostOwnsRecord() || isAdmin();
+      allow get:    if travelerOwnsRecord() || hostOwnsRecord() || isAdmin();
+      allow list:   if isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── paymentSchedules ────────────────────────────────────────────────────
 
     match /paymentSchedules/{documentId} {
-      allow read: if travelerOwnsRecord() || hostOwnsRecord() || isAdmin();
+      allow get:    if travelerOwnsRecord() || hostOwnsRecord() || isAdmin();
+      allow list:   if isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── payments ────────────────────────────────────────────────────────────
 
     match /payments/{documentId} {
-      allow read: if travelerOwnsRecord() || hostOwnsRecord() || isAdmin();
+      allow get:    if travelerOwnsRecord() || hostOwnsRecord() || isAdmin();
+      allow list:   if isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── referrals ───────────────────────────────────────────────────────────
 
     match /referrals/{documentId} {
-      allow read: if signedIn() &&
-        (
-          resource.data.referrerUid == uid() ||
-          resource.data.referredUid == uid() ||
-          isAdmin()
-        );
+      allow get: if signedIn() && (
+        resource.data.referrerUid == uid() ||
+        resource.data.referredUid == uid() ||
+        isAdmin()
+      );
+      allow list:   if isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── supportArticles ─────────────────────────────────────────────────────
 
     match /supportArticles/{documentId} {
-      allow read: if isPublished() || isAdmin();
+      allow get:    if isPublished() || isAdmin();
+      allow list:   if isPublished() || isAdmin();
       allow create, update, delete: if false;
     }
 
+    // ─── auditEvents ─────────────────────────────────────────────────────────
+    // Admin read only. Server-only writes.
+
     match /auditEvents/{documentId} {
-      allow read: if isAdmin();
+      allow get:    if isAdmin();
+      allow list:   if isAdmin();
       allow create, update, delete: if false;
     }
+
+    // ─── Catch-all deny ──────────────────────────────────────────────────────
 
     match /{document=**} {
       allow read, write: if false;

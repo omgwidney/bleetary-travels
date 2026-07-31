@@ -1,4 +1,47 @@
-import type { UserRole } from "@/lib/auth/roles";
+/**
+ * lib/data-model.ts
+ *
+ * Collection name registry and content-collection constants.
+ * Full document interfaces live in lib/db/schema.ts.
+ */
+
+// ─── Re-export everything from the schema ─────────────────────────────────────
+
+export type {
+  AuditEventDocument,
+  BaseDocument,
+  BookingDocument,
+  BookingStatus,
+  CollectionDocumentMap,
+  DestinationDocument,
+  HostApplicationDocument,
+  HostApplicationStatus,
+  HostProfileDocument,
+  InterestResponseDocument,
+  ItineraryActivity,
+  ItineraryDay,
+  ItineraryDocument,
+  OwnedDocument,
+  PaymentDocument,
+  PaymentInstallment,
+  PaymentInstallmentStatus,
+  PaymentScheduleDocument,
+  PaymentStatus,
+  PaymentType,
+  PublicationStatus,
+  PublishedDocument,
+  ReferralDocument,
+  ReferralStatus,
+  RoomType,
+  SupportArticleDocument,
+  TripBadgeType,
+  TripDepartureDocument,
+  TripDocument,
+  UserDocument,
+  UserRole,
+} from "@/lib/db/schema";
+
+// ─── Collection name registry ─────────────────────────────────────────────────
 
 export const COLLECTIONS = {
   users: "users",
@@ -20,51 +63,9 @@ export const COLLECTIONS = {
 export type CoreCollectionName =
   (typeof COLLECTIONS)[keyof typeof COLLECTIONS];
 
-export type PublicationStatus = "draft" | "published" | "archived";
-
-export interface UserDocument {
-  uid: string;
-  email: string;
-  displayName: string;
-  role: UserRole;
-  status: "active" | "disabled";
-  emailVerified: boolean;
-  photoPath: string | null;
-  createdAt: unknown;
-  updatedAt: unknown;
-  lastLoginAt?: unknown;
-}
-
-export interface OwnedDocument {
-  ownerUid: string;
-  createdAt: unknown;
-  updatedAt: unknown;
-}
-
-export interface PublishedDocument {
-  status: PublicationStatus;
-  publishedAt: unknown | null;
-  createdAt: unknown;
-  updatedAt: unknown;
-}
-
-export interface HostApplicationDocument extends OwnedDocument {
-  status: "submitted" | "under_review" | "approved" | "rejected" | "waitlisted";
-  submittedAt: unknown;
-}
-
-export interface HostProfileDocument extends OwnedDocument {
-  displayName: string;
-  bio: string;
-  imagePath: string | null;
-  status: PublicationStatus;
-}
-
-export interface BookingOwnedDocument extends OwnedDocument {
-  travelerUid: string;
-  hostUid: string;
-  tripId: string;
-}
+// ─── Admin-managed content collections ───────────────────────────────────────
+// These collections are seeded and published exclusively through server-side
+// admin endpoints. Client writes are denied by Firestore security rules.
 
 export const ADMIN_CONTENT_COLLECTIONS = [
   COLLECTIONS.destinations,

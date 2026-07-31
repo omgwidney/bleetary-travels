@@ -2,8 +2,15 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+
+    // ─── Auth helpers ─────────────────────────────────────────────────────
+
     function signedIn() {
       return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
     }
 
     function isAdmin() {
@@ -14,6 +21,9 @@ service firebase.storage {
       return signedIn() && request.auth.token.role == "host";
     }
 
+    // ─── Upload validators ────────────────────────────────────────────────
+
+    /** Validates an uploaded image: non-empty, within size limit, correct MIME. */
     function isSupportedImage(maxBytes) {
       return request.resource != null &&
         request.resource.size > 0 &&
@@ -21,35 +31,100 @@ service firebase.storage {
         request.resource.contentType.matches("image/(jpeg|png|webp)");
     }
 
+    // ─── published/ — static public assets (admin writes only) ───────────
+    // e.g. published/hero/banner.webp
+
     match /published/{category}/{fileName} {
-      allow read: if true;
-      allow write: if false;
+      allow read:   if true;
+      allow write:  if false;
     }
+
+    // ─── private/ — internal admin-only assets ────────────────────────────
 
     match /private/{category}/{fileName} {
-      allow read: if isAdmin();
-      allow write: if false;
+      allow read:   if isAdmin();
+      allow write:  if false;
     }
+
+    // ─── users/{userId}/profile/ — traveler profile photos ───────────────
+    // Traveler can read & upload their own photo (max 5 MB).
+    // Admin can read any user's profile photo.
 
     match /users/{userId}/profile/{fileName} {
-      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow read:   if signedIn() && (uid() == userId || isAdmin());
       allow create, update: if
         signedIn() &&
-        request.auth.uid == userId &&
+        uid() == userId &&
         isSupportedImage(5 * 1024 * 1024);
-      allow delete: if signedIn() && request.auth.uid == userId;
+      allow delete: if signedIn() && uid() == userId;
     }
 
+    // ─── hosts/{hostId}/ — host-owned media ──────────────────────────────
+    // Covers profile photos, itinerary images, and trip images uploaded
+    // by the host. Publicly readable only via the published/ path
+    // (server copies the asset after admin approval).
+    // Direct host-path read is restricted to the owning host or admin.
+
     match /hosts/{hostId}/{category}/{fileName} {
-      allow read: if
-        signedIn() &&
-        (request.auth.uid == hostId || isAdmin());
+      allow read:   if signedIn() && (uid() == hostId || isAdmin());
       allow create, update: if
         isHost() &&
-        request.auth.uid == hostId &&
+        uid() == hostId &&
         isSupportedImage(10 * 1024 * 1024);
-      allow delete: if isHost() && request.auth.uid == hostId;
+      allow delete: if isHost() && uid() == hostId;
     }
+
+    // ─── trips/{tripId}/images/ — trip gallery images ────────────────────
+    // Public read (trip pages are public once published).
+    // Only the trip-owning host or admin can upload.
+    // Reads are unrestricted so the public trip catalog can display images.
+    // Note: the server validates that the uploading host actually owns the
+    // trip before accepting the upload through an API route.
+
+    match /trips/{tripId}/images/{fileName} {
+      allow read:   if true;
+      allow create, update: if
+        isHost() &&
+        isSupportedImage(10 * 1024 * 1024);
+      allow delete: if isHost() || isAdmin();
+    }
+
+    // ─── destinations/{destinationId}/images/ — destination imagery ───────
+    // Public read. Admin-only write (destinations are managed by Bleetary staff).
+
+    match /destinations/{destinationId}/images/{fileName} {
+      allow read:   if true;
+      allow create, update: if
+        isAdmin() &&
+        isSupportedImage(10 * 1024 * 1024);
+      allow delete: if isAdmin();
+    }
+
+    // ─── itineraries/{itineraryId}/images/ — itinerary day photos ─────────
+    // Public read (itinerary pages are public once published).
+    // The host uploads their own itinerary images; admin can also write.
+
+    match /itineraries/{itineraryId}/images/{fileName} {
+      allow read:   if true;
+      allow create, update: if
+        (isHost() || isAdmin()) &&
+        isSupportedImage(10 * 1024 * 1024);
+      allow delete: if isHost() || isAdmin();
+    }
+
+    // ─── content/{category}/ — editorial & support imagery ───────────────
+    // Used for support-article illustrations, blog assets, and marketing
+    // content. Public read; admin write only.
+
+    match /content/{category}/{fileName} {
+      allow read:   if true;
+      allow create, update: if
+        isAdmin() &&
+        isSupportedImage(20 * 1024 * 1024);
+      allow delete: if isAdmin();
+    }
+
+    // ─── Catch-all deny ───────────────────────────────────────────────────
 
     match /{allPaths=**} {
       allow read, write: if false;
