@@ -5,9 +5,35 @@ import Footer from "@/components/layout/Footer";
 import Nav from "@/components/layout/Nav";
 import TripCard from "@/components/trips/TripCard";
 import TripSearch from "@/components/TripSearch";
-import { destinations, trips } from "@/lib/catalog";
+import { getPublishedTrips, getTripDepartures } from "@/lib/db/trips";
+import { getPublishedDestinations } from "@/lib/db/destinations";
+import { getHostProfile } from "@/lib/db/hosts";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Fetch the 3 most-recently-published trips for the Trending section
+  const [trendingTrips, destinations] = await Promise.all([
+    getPublishedTrips(3),
+    getPublishedDestinations(),
+  ]);
+
+  // For each trip, fetch its host profile and earliest departure in parallel
+  const tripData = await Promise.all(
+    trendingTrips.map(async (trip) => {
+      const [hostProfile, departures] = await Promise.all([
+        getHostProfile(trip.hostUid),
+        getTripDepartures(trip.id),
+      ]);
+      return {
+        trip,
+        hostProfile: hostProfile ?? {
+          displayName: "Bleetary Host",
+          imagePath: null,
+        },
+        departure: departures[0] ?? null,
+      };
+    }),
+  );
+
   return (
     <div className="min-h-screen bg-white">
       <Nav />
@@ -64,6 +90,7 @@ export default function HomePage() {
           <TripSearch />
         </div>
 
+        {/* Trending Group Trips — live from Firestore */}
         <section className="bg-[#f4f5f7] py-16 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-end justify-between mb-8">
@@ -83,11 +110,22 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {trips.map((trip) => (
-                <TripCard key={trip.id} trip={trip} />
-              ))}
-            </div>
+            {tripData.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {tripData.map(({ trip, hostProfile, departure }) => (
+                  <TripCard
+                    key={trip.id}
+                    trip={trip}
+                    hostProfile={hostProfile}
+                    departure={departure}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-12">
+                No trips available yet — check back soon!
+              </p>
+            )}
 
             <div className="mt-8 flex justify-center sm:hidden">
               <Link
@@ -100,6 +138,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Explore Destinations — live from Firestore */}
         <section className="py-16 px-4 sm:px-6 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="mb-8">
@@ -113,7 +152,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {destinations.map((destination) => (
                 <DestinationCard
-                  key={destination.slug}
+                  key={destination.id}
                   destination={destination}
                 />
               ))}

@@ -19,6 +19,7 @@
     "check": "npm run lint && npm run typecheck && npm run test",
     "audit:production": "npm audit --omit=dev --audit-level=critical",
     "admin:bootstrap": "node scripts/bootstrap-admin.mjs",
+    "seed": "tsx scripts/seed-emulator.ts",
     "emulators": "firebase emulators:start --only auth,firestore,storage",
     "emulators:export": "firebase emulators:export .firebase/emulator-data"
   },
@@ -44,11 +45,13 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.4",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
     "firebase-tools": "^15.24.0",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.7",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }
