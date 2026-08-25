@@ -20,7 +20,7 @@
     "audit:production": "npm audit --omit=dev --audit-level=critical",
     "admin:bootstrap": "node scripts/bootstrap-admin.mjs",
     "seed": "tsx scripts/seed-emulator.ts",
-    "emulators": "firebase emulators:start --only auth,firestore,storage",
+    "emulators": "firebase emulators:start --import=./emulator-data --export-on-exit --only auth,firestore,storage",
     "emulators:export": "firebase emulators:export .firebase/emulator-data"
   },
   "dependencies": {

@@ -22,6 +22,7 @@ config({ path: resolve(process.cwd(), ".env.local") });
 
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp, WriteBatch } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 import type {
   DestinationDocument,
   HostProfileDocument,
@@ -59,6 +60,54 @@ if (!getApps().length) {
 }
 const db = getFirestore();
 db.settings({ ignoreUndefinedProperties: true });
+
+// ─── Create Admin User ────────────────────────────────────────────────────────
+async function createAdminUser() {
+  const auth = getAuth();
+  const adminEmail = "admin@bleetary.com";
+  const adminPassword = "password123";
+  let adminUid: string;
+  try {
+    const userRecord = await auth.createUser({
+      email: adminEmail,
+      password: adminPassword,
+      emailVerified: true,
+    });
+    adminUid = userRecord.uid;
+    console.log(`  👤  Created admin user ${adminEmail} (uid=${adminUid})`);
+  } catch (e: unknown) {
+    if (
+      typeof e === "object" &&
+      e !== null &&
+      "code" in e &&
+      (e as { code?: string }).code === "auth/email-already-exists"
+    ) {
+      const user = await auth.getUserByEmail(adminEmail);
+      adminUid = user.uid;
+      console.log(`  👤  Admin user already exists (uid=${adminUid})`);
+    } else {
+      console.error("❌  Failed to create admin user:", e);
+      throw e;
+    }
+  }
+  // Ensure role in Firestore users collection
+  const userDoc = {
+    uid: adminUid,
+    email: adminEmail,
+    displayName: "Admin",
+    role: "admin" as const,
+    status: "active" as const,
+    emailVerified: true,
+    photoPath: null,
+    referralCode: null,
+    lastLoginAt: Timestamp.now(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  };
+  await db.collection("users").doc(adminUid).set(userDoc);
+  console.log(`  📁  Admin user document written for uid=${adminUid}`);
+}
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -580,6 +629,8 @@ async function seed() {
     batch2.set(db.collection("tripDepartures").doc(id), data);
   }
   await batch2.commit();
+
+  await createAdminUser();
 
   // Summary
   console.log("\n✅  Seed complete!\n");
