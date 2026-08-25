@@ -11,6 +11,8 @@ import { getDestinationById } from "@/lib/db/destinations";
 import { formatDate, formatDateRange, formatCents } from "@/lib/format";
 import type { TripDepartureDocument } from "@/lib/db/schema";
 
+import ReserveSpotButton from "@/components/trips/ReserveSpotButton";
+
 // Always server-render from Firestore (ISR can be added in Phase 6)
 export const dynamic = "force-dynamic";
 
@@ -35,8 +37,12 @@ export async function generateMetadata({
 
 function DepartureCard({
   departure,
+  tripId,
+  tripSlug,
 }: {
   departure: TripDepartureDocument & { id: string };
+  tripId: string;
+  tripSlug: string;
 }) {
   const spotsLeft = departure.capacity - departure.confirmedCount;
   const isSoldOut = spotsLeft <= 0;
@@ -109,17 +115,13 @@ function DepartureCard({
         </span>
       </div>
 
-      <Link
-        href="/coming-soon"
-        className={`mt-4 flex justify-center font-bold py-3 rounded-xl transition-colors text-sm ${
-          isSoldOut
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none"
-            : "bg-[#f05c40] hover:bg-[#d94e34] text-white"
-        }`}
-        aria-disabled={isSoldOut}
-      >
-        {isSoldOut ? "Sold out" : "Reserve my spot"}
-      </Link>
+      <ReserveSpotButton
+        tripId={tripId}
+        departureId={departure.id}
+        tripSlug={tripSlug}
+        isSoldOut={isSoldOut}
+        depositPercent={departure.depositPercent}
+      />
     </div>
   );
 }
@@ -353,7 +355,12 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
 
             {departures.length > 0 ? (
               departures.map((departure) => (
-                <DepartureCard key={departure.id} departure={departure} />
+                <DepartureCard
+                  key={departure.id}
+                  departure={departure}
+                  tripId={trip.id}
+                  tripSlug={trip.slug}
+                />
               ))
             ) : (
               <div className="bg-[#f4f5f7] rounded-2xl p-6 text-center">
