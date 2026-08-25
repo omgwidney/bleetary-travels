@@ -5,6 +5,10 @@ import { getStripe } from "@/lib/stripe";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { COLLECTIONS } from "@/lib/data-model";
 import { logAuditEvent } from "@/lib/db/audit";
+import {
+  sendBookingConfirmationEmail,
+  sendNewBookingHostAlertEmail,
+} from "@/lib/email";
 import type { TripDepartureDocument } from "@/lib/db/schema";
 
 export async function POST(request: NextRequest) {
@@ -222,6 +226,51 @@ export async function POST(request: NextRequest) {
       },
       reason: "Stripe deposit checkout completed successfully",
     });
+
+    // 7. Dispatch transactional emails (non-blocking)
+    try {
+      const [travelerSnap, hostSnap] = await Promise.all([
+        db.collection(COLLECTIONS.users).doc(travelerUid).get(),
+        db.collection(COLLECTIONS.users).doc(hostUid).get(),
+      ]);
+
+      const travelerData = travelerSnap.data();
+      const hostData = hostSnap.data();
+
+      const travelerEmail =
+        travelerData?.email ||
+        session.customer_details?.email ||
+        "traveler@example.com";
+      const travelerName =
+        travelerData?.displayName ||
+        session.customer_details?.name ||
+        "Traveler";
+
+      // Traveler receipt
+      await sendBookingConfirmationEmail({
+        travelerEmail,
+        travelerName,
+        tripTitle: tripTitle || "Bleetary Group Adventure",
+        departureDates: "Confirmed Departure",
+        depositAmountCents: depositCents,
+        totalAmountCents: totalCents,
+        bookingId: bookingRef.id,
+      });
+
+      // Host alert
+      if (hostData?.email) {
+        await sendNewBookingHostAlertEmail({
+          hostEmail: hostData.email,
+          hostName: hostData.displayName || "Host",
+          tripTitle: tripTitle || "Bleetary Group Adventure",
+          departureDates: "Upcoming Departure",
+          travelerName,
+          guestCount,
+        });
+      }
+    } catch (emailErr) {
+      console.error("[Transactional Email Dispatch Error]:", emailErr);
+    }
   }
 
   return NextResponse.json({ received: true });

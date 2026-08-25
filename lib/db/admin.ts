@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { COLLECTIONS } from "@/lib/data-model";
 import { logAuditEvent } from "@/lib/db/audit";
+import { sendHostApplicationDecisionEmail } from "@/lib/email";
 import type {
   HostApplicationDocument,
   HostApplicationStatus,
@@ -220,6 +221,24 @@ export async function reviewHostApplication(
       },
       reason: reviewNotes || `Application marked as ${decision}`,
     });
+  }
+
+  // Dispatch applicant decision email (non-blocking)
+  try {
+    const userDoc = await db.collection(COLLECTIONS.users).doc(applicationId).get();
+    const userData = userDoc.data();
+    const applicantEmail = userData?.email || "host@example.com";
+    const applicantName =
+      userData?.displayName || appData.communityName || "Host Applicant";
+
+    await sendHostApplicationDecisionEmail({
+      applicantEmail,
+      applicantName,
+      decision,
+      reviewNotes,
+    });
+  } catch (emailErr) {
+    console.error("[Host Decision Email Error]:", emailErr);
   }
 }
 

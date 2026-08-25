@@ -53,9 +53,25 @@ vi.mock("@/lib/firebase-admin", () => ({
           doc: () => ({ id: "payment-doc-id" }),
         };
       }
+      if (col === "users") {
+        return {
+          doc: (id?: string) => ({
+            id: id || "user-doc-id",
+            get: () =>
+              Promise.resolve({
+                exists: true,
+                data: () => ({
+                  email: "traveler@example.com",
+                  displayName: "Traveler",
+                }),
+              }),
+          }),
+        };
+      }
       return {
         doc: (id?: string) => ({
           id: id || `${col}-doc-id`,
+          get: () => Promise.resolve({ exists: false }),
         }),
       };
     },
