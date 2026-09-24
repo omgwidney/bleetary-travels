@@ -21,6 +21,7 @@ vi.mock("@/lib/stripe", () => ({
       },
     },
   }),
+  hasRealStripeKey: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("@/lib/firebase-admin", () => ({

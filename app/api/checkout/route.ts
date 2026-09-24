@@ -3,7 +3,7 @@ import { z } from "zod";
 import { authorizeRequest, isSameOrigin } from "@/lib/auth/request";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { COLLECTIONS } from "@/lib/data-model";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, hasRealStripeKey } from "@/lib/stripe";
 import type { TripDocument, TripDepartureDocument } from "@/lib/db/schema";
 
 const checkoutPayloadSchema = z.object({
@@ -90,6 +90,32 @@ export async function POST(request: NextRequest) {
     request.headers.get("referer") ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "http://localhost:3000";
+
+  if (!hasRealStripeKey()) {
+    if (process.env.ALLOW_MOCK_CHECKOUT !== "true") {
+      return NextResponse.json(
+        { error: "Payments are not configured on this server." },
+        { status: 503 },
+      );
+    }
+
+    const mockSessionId = `cs_test_mock_${Date.now()}`;
+    const formattedDeposit = `$${(totalDepositCents / 100).toFixed(2)}`;
+    const mockUrl = `${origin}/checkout/mock?session_id=${encodeURIComponent(
+      mockSessionId,
+    )}&tripId=${encodeURIComponent(tripId)}&departureId=${encodeURIComponent(
+      departureId,
+    )}&guestCount=${guestCount}&roomType=${encodeURIComponent(
+      roomType,
+    )}&tripTitle=${encodeURIComponent(trip.title)}&amount=${encodeURIComponent(
+      formattedDeposit,
+    )}`;
+
+    return NextResponse.json({
+      url: mockUrl,
+      sessionId: mockSessionId,
+    });
+  }
 
   const stripe = getStripe();
 

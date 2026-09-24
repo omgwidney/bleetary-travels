@@ -17,12 +17,17 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const session = await requireRole(["admin"], "/login?next=/admin");
 
-  const [metrics, applications, trips, auditEvents] = await Promise.all([
+  const [rawMetrics, rawApplications, rawTrips, rawAuditEvents] = await Promise.all([
     getAdminOverviewMetrics(),
     getAllHostApplicationsAdmin(),
     getAllTripsAdmin(),
     getRecentAuditEvents(50),
   ]);
+
+  const metrics = JSON.parse(JSON.stringify(rawMetrics));
+  const applications = JSON.parse(JSON.stringify(rawApplications));
+  const trips = JSON.parse(JSON.stringify(rawTrips));
+  const auditEvents = JSON.parse(JSON.stringify(rawAuditEvents));
 
   return (
     <div className="min-h-screen bg-[#f4f5f7] flex flex-col justify-between">

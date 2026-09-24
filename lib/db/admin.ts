@@ -332,16 +332,31 @@ export async function getDepartureManifest(
   departureId: string,
 ): Promise<DepartureManifestData | null> {
   const db = getAdminDb();
-  const [departureDoc, bookingsSnap] = await Promise.all([
-    db.collection(COLLECTIONS.tripDepartures).doc(departureId).get(),
-    db
-      .collection(COLLECTIONS.bookings)
-      .where("departureId", "==", departureId)
-      .where("status", "==", "confirmed")
-      .get(),
-  ]);
+  let departureDoc = await db
+    .collection(COLLECTIONS.tripDepartures)
+    .doc(departureId)
+    .get();
+
+  if (!departureDoc.exists) {
+    const depQuery = await db
+      .collection(COLLECTIONS.tripDepartures)
+      .where("tripId", "==", departureId)
+      .limit(1)
+      .get();
+    if (!depQuery.empty) {
+      departureDoc = depQuery.docs[0];
+    }
+  }
 
   if (!departureDoc.exists) return null;
+  const resolvedDepartureId = departureDoc.id;
+
+  const bookingsSnap = await db
+    .collection(COLLECTIONS.bookings)
+    .where("departureId", "==", resolvedDepartureId)
+    .where("status", "==", "confirmed")
+    .get();
+
   const departure = {
     id: departureDoc.id,
     ...(departureDoc.data() as TripDepartureDocument),

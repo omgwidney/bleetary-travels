@@ -90,6 +90,9 @@ async function createAdminUser() {
       throw e;
     }
   }
+  // Ensure custom claim role: admin
+  await auth.setCustomUserClaims(adminUid, { role: "admin" });
+
   // Ensure role in Firestore users collection
   const userDoc = {
     uid: adminUid,

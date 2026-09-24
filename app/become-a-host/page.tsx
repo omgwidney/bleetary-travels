@@ -17,7 +17,10 @@ export default async function BecomeAHostPage() {
 
   let existingApplication = null;
   if (session?.uid) {
-    existingApplication = await getHostApplication(session.uid);
+    const rawApp = await getHostApplication(session.uid);
+    if (rawApp) {
+      existingApplication = JSON.parse(JSON.stringify(rawApp));
+    }
   }
 
   const destinations = await getPublishedDestinations();

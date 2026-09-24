@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Brand from "@/components/Brand";
+import NavAuthSection from "@/components/layout/NavAuthSection";
 
 export interface NavProps {
   activeHref?: string;
@@ -37,22 +38,9 @@ export default function Nav({ activeHref }: NavProps) {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden sm:block text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/become-a-host"
-            id="nav-become-host-cta"
-            className="inline-flex items-center gap-1.5 bg-[#f05c40] hover:bg-[#d94e34] text-white text-sm font-semibold px-4 py-2 rounded-full transition-all duration-200 shadow-[0_4px_14px_rgba(240,92,64,0.35)] hover:shadow-[0_6px_20px_rgba(240,92,64,0.45)] hover:-translate-y-0.5"
-          >
-            Become a Host
-          </Link>
-        </div>
+        <NavAuthSection />
       </nav>
     </header>
   );
 }
+

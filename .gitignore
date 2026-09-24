@@ -40,6 +40,7 @@ yarn-error.log*
 # firebase emulator state
 /.firebase/
 /*-debug.log
+/emulator-data/
 
 # browser test output
 /playwright-report/

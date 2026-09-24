@@ -167,10 +167,10 @@ export async function POST(request: NextRequest) {
             sequence: 1,
             labelKey: "deposit",
             amountCents: depositCents,
-            dueDate: now,
+            dueDate: Timestamp.now(),
             status: "paid" as const,
             paymentId: paymentRef.id,
-            paidAt: now,
+            paidAt: Timestamp.now(),
           },
           ...(balanceRemainingCents > 0
             ? [
