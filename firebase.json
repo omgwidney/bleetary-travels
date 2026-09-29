@@ -21,5 +21,22 @@
       "port": 4000
     },
     "singleProjectMode": true
+  },
+  "apphosting": {
+    "backendId": "bleetary-web",
+    "rootDir": "/",
+    "ignore": [
+      "node_modules",
+      ".git",
+      ".next",
+      ".next-live",
+      ".env",
+      ".env.*",
+      "emulator-data",
+      "test-results",
+      "playwright-report",
+      "*.log",
+      "tsconfig.tsbuildinfo"
+    ]
   }
 }
