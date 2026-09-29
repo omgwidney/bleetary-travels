@@ -9,6 +9,8 @@ import { getPublishedTrips, getTripDepartures } from "@/lib/db/trips";
 import { getPublishedDestinations } from "@/lib/db/destinations";
 import { getHostProfile } from "@/lib/db/hosts";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   // Fetch the 3 most-recently-published trips for the Trending section
   const [trendingTrips, destinations] = await Promise.all([

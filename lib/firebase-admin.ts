@@ -51,10 +51,10 @@ function initializeFirebaseAdmin(): App {
   }
 
   const credential =
-    clientEmail && privateKey
-      ? cert({ projectId, clientEmail, privateKey })
-      : isUsingEmulators()
-        ? undefined
+    isUsingEmulators()
+      ? undefined
+      : clientEmail && privateKey
+        ? cert({ projectId, clientEmail, privateKey })
         : applicationDefault();
 
   return initializeApp({

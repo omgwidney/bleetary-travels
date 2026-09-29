@@ -89,7 +89,9 @@ export default function PasswordResetForm({ oobCode }: { oobCode?: string }) {
           handleCodeInApp: true,
         });
         setMessage(
-          "If that email belongs to an account, a reset link is on its way.",
+          process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true"
+            ? "Local testing: no email is sent. If the account exists, open the password reset link in the Firebase emulator terminal."
+            : "If that email belongs to an account, a reset link is on its way.",
         );
       } catch (caught) {
         setSubmitError(

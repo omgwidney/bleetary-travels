@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   sendEmailVerification,
   signInWithEmailAndPassword,
-  signOut,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { roleHome, type UserRole } from "@/lib/auth/roles";
@@ -61,13 +60,11 @@ export default function LoginForm({ nextPath }: { nextPath?: string }) {
 
       if (!credential.user.emailVerified) {
         await sendEmailVerification(credential.user, {
-          url: `${window.location.origin}/verify-email`,
+          url: `${window.location.origin}/verify-email${safeNextPath(nextPath) ? `?next=${encodeURIComponent(safeNextPath(nextPath)!)}` : ""}`,
           handleCodeInApp: true,
         });
-        await signOut(auth);
-        setSubmitError(
-          "Verify your email before signing in. We sent you a fresh verification link.",
-        );
+        const destination = safeNextPath(nextPath);
+        router.replace(`/verify-email?email=${encodeURIComponent(email)}${destination ? `&next=${encodeURIComponent(destination)}` : ""}`);
         return;
       }
 

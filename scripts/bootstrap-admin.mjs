@@ -33,7 +33,7 @@ const emulatorProjectId = (() => {
     return undefined;
   }
 })();
-const projectId = emulatorProjectId ?? configuredProjectId;
+const projectId = configuredProjectId ?? emulatorProjectId;
 const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
 const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
 const usingEmulator = Boolean(process.env.FIREBASE_AUTH_EMULATOR_HOST);
@@ -51,10 +51,10 @@ if (!usingEmulator && (!clientEmail || !privateKey)) {
 }
 
 const credential =
-  clientEmail && privateKey
-    ? cert({ projectId, clientEmail, privateKey })
-    : usingEmulator
-      ? undefined
+  usingEmulator
+    ? undefined
+    : clientEmail && privateKey
+      ? cert({ projectId, clientEmail, privateKey })
       : applicationDefault();
 
 const app = initializeApp({

@@ -15,7 +15,7 @@ const mockCompleteSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  if (process.env.ALLOW_MOCK_CHECKOUT !== "true") {
+  if (process.env.NODE_ENV === "production" || process.env.ALLOW_MOCK_CHECKOUT !== "true") {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 

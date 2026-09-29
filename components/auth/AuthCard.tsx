@@ -22,6 +22,11 @@ export default function AuthCard({
           <p className="mt-2 text-sm leading-relaxed text-gray-500">
             {description}
           </p>
+          {process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true" && (
+            <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+              Local test accounts only. Your live Bleetary account does not work in this test environment.
+            </p>
+          )}
           <div className="mt-7">{children}</div>
         </section>
         <p className="mt-6 text-center text-xs text-gray-500">

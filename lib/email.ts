@@ -36,6 +36,10 @@ export async function sendEmail({
   const resend = getResend();
 
   if (!resend) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Email unavailable] Configure Resend and disable Firebase emulators before sending production email.");
+      return { success: false };
+    }
     console.log(
       `\n[📧 Transactional Email Mock Delivery]`,
       `\nTo: ${to}`,

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default async function VerifyEmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string; oobCode?: string }>;
+  searchParams: Promise<{ email?: string; oobCode?: string; next?: string }>;
 }) {
   const params = await searchParams;
   return (
@@ -17,7 +17,7 @@ export default async function VerifyEmailPage({
       title="Verify your email"
       description="Email verification is required before Bleetary creates a secure server session."
     >
-      <VerifyEmailPanel email={params.email} oobCode={params.oobCode} />
+      <VerifyEmailPanel email={params.email} oobCode={params.oobCode} nextPath={params.next} />
     </AuthCard>
   );
 }

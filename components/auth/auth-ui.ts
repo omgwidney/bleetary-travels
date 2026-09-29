@@ -16,7 +16,7 @@ export function firebaseErrorMessage(error: unknown): string {
       : "";
 
   const messages: Record<string, string> = {
-    "auth/email-already-in-use": "An account already exists for this email.",
+    "auth/email-already-in-use": "An account already exists for this email. Sign in to continue verification, or reset your password.",
     "auth/invalid-credential": "The email or password is incorrect.",
     "auth/invalid-email": "Enter a valid email address.",
     "auth/too-many-requests": "Too many attempts. Please wait and try again.",

@@ -105,6 +105,8 @@ describe("POST /api/checkout", () => {
       exists: true,
       data: () => ({
         status: "published",
+        tripId: "trip-1",
+        hostUid: "host-1",
         capacity: 10,
         confirmedCount: 10, // sold out
         basePriceCents: 200000,
@@ -171,6 +173,8 @@ describe("POST /api/checkout", () => {
       exists: true,
       data: () => ({
         status: "published",
+        tripId: "trip-1",
+        hostUid: "host-1",
         capacity: 10,
         confirmedCount: 2,
         basePriceCents: 200000,

@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ShieldCheck, CreditCard, Lock, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 
 function MockStripeCheckoutContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const sessionId = searchParams.get("session_id") || "mock_session_default";
   const tripId = searchParams.get("tripId") || "";

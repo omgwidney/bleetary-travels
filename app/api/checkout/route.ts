@@ -61,6 +61,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (departure.tripId !== tripId || departure.hostUid !== trip.hostUid) {
+    return NextResponse.json({ error: "Trip and departure do not match." }, { status: 400 });
+  }
+
   // Capacity verification
   const spotsLeft = departure.capacity - (departure.confirmedCount || 0);
   if (spotsLeft < guestCount) {
@@ -77,7 +81,11 @@ export async function POST(request: NextRequest) {
 
   // Calculate pricing
   const effectiveBasePriceCents = departure.basePriceCents;
-  const depositPercent = departure.depositPercent || 30;
+  const depositPercent = departure.depositPercent ?? 30;
+  if (!Number.isSafeInteger(effectiveBasePriceCents) || effectiveBasePriceCents <= 0 ||
+      !Number.isFinite(depositPercent) || depositPercent <= 0 || depositPercent > 100) {
+    return NextResponse.json({ error: "This departure has invalid pricing." }, { status: 409 });
+  }
   const unitDepositCents = Math.round(
     (effectiveBasePriceCents * depositPercent) / 100,
   );
@@ -92,7 +100,7 @@ export async function POST(request: NextRequest) {
     "http://localhost:3000";
 
   if (!hasRealStripeKey()) {
-    if (process.env.ALLOW_MOCK_CHECKOUT !== "true") {
+    if (process.env.NODE_ENV === "production" || process.env.ALLOW_MOCK_CHECKOUT !== "true") {
       return NextResponse.json(
         { error: "Payments are not configured on this server." },
         { status: 503 },

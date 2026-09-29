@@ -29,7 +29,6 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   sendEmailVerification,
-  signOut,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { firebaseErrorMessage } from "@/components/auth/auth-ui";
@@ -273,25 +272,11 @@ export default function HostApplicationWizard({
           throw new Error(payload.error || "Failed to initialize account.");
         }
 
-        // Establish session cookie
-        const sessionRes = await fetch("/api/auth/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken }),
+        await sendEmailVerification(cred.user, {
+          url: `${window.location.origin}/verify-email?next=%2Fbecome-a-host`,
+          handleCodeInApp: true,
         });
-
-        if (!sessionRes.ok) {
-          throw new Error("Account created! Please sign in to verify session.");
-        }
-
-        setCurrentUser({
-          uid: cred.user.uid,
-          email: cred.user.email || authEmail,
-          displayName: authName,
-        });
-
-        // Submit application immediately
-        await submitApplication();
+        router.push(`/verify-email?email=${encodeURIComponent(authEmail)}&next=%2Fbecome-a-host`);
       } else {
         // Login mode
         if (!authEmail.trim() || !authPassword) {
@@ -302,13 +287,11 @@ export default function HostApplicationWizard({
 
         if (!cred.user.emailVerified) {
           await sendEmailVerification(cred.user, {
-            url: `${window.location.origin}/verify-email`,
+            url: `${window.location.origin}/verify-email?next=%2Fbecome-a-host`,
             handleCodeInApp: true,
           });
-          await signOut(auth);
-          throw new Error(
-            "Please verify your email first. We sent a verification link to your inbox.",
-          );
+          router.push(`/verify-email?email=${encodeURIComponent(authEmail)}&next=%2Fbecome-a-host`);
+          return;
         }
 
         const idToken = await cred.user.getIdToken(true);
@@ -1051,14 +1034,14 @@ export default function HostApplicationWizard({
                         <>
                           <Loader2 size={15} className="animate-spin" />{" "}
                           {authMode === "register"
-                            ? "Creating Account & Submitting..."
+                            ? "Creating Account..."
                             : "Signing In & Submitting..."}
                         </>
                       ) : (
                         <>
                           <Send size={14} />{" "}
                           {authMode === "register"
-                            ? "Create Account & Submit Application"
+                            ? "Create Account & Verify Email"
                             : "Sign In & Submit Application"}
                         </>
                       )}

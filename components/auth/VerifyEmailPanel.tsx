@@ -13,6 +13,7 @@ import { roleHome, type UserRole } from "@/lib/auth/roles";
 import {
   buttonClassName,
   firebaseErrorMessage,
+  safeNextPath,
 } from "@/components/auth/auth-ui";
 
 const POLL_INTERVAL_MS = 4000;
@@ -20,13 +21,19 @@ const POLL_INTERVAL_MS = 4000;
 export default function VerifyEmailPanel({
   email,
   oobCode,
+  nextPath,
 }: {
   email?: string;
   oobCode?: string;
+  nextPath?: string;
 }) {
   const router = useRouter();
+  const destination = safeNextPath(nextPath);
+  const localTesting = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
   const [message, setMessage] = useState(
-    email ? `We sent a verification link to ${email}.` : "Check your inbox.",
+    localTesting
+      ? "Local testing: no email is sent. Open the verification link printed in the Firebase emulator terminal, then return here and select Continue."
+      : email ? `We sent a verification link to ${email}.` : "Check your inbox.",
   );
   const [error, setError] = useState("");
   const [pending, setPending] = useState(Boolean(oobCode));
@@ -82,14 +89,14 @@ export default function VerifyEmailPanel({
     try {
       const user = auth.currentUser;
       if (!user) {
-        router.replace("/login?verified=1");
+        router.replace(`/login?verified=1${destination ? `&next=${encodeURIComponent(destination)}` : ""}`);
         return;
       }
 
       await user.reload();
       if (!user.emailVerified) {
         setError(
-          "Verification is not complete yet. Open the link in your email.",
+          localTesting ? "Open the verification link in the Firebase emulator terminal first." : "Verification is not complete yet. Open the link in your email.",
         );
         return;
       }
@@ -108,7 +115,7 @@ export default function VerifyEmailPanel({
         throw new Error(payload.error ?? "Unable to create a session.");
       }
       if (pollingRef.current) clearInterval(pollingRef.current);
-      router.replace(roleHome(payload.role));
+      router.replace(destination ?? roleHome(payload.role));
       router.refresh();
     } catch (caught) {
       setError(
@@ -130,10 +137,10 @@ export default function VerifyEmailPanel({
     }
     try {
       await sendEmailVerification(user, {
-        url: `${window.location.origin}/verify-email`,
+        url: `${window.location.origin}/verify-email${destination ? `?next=${encodeURIComponent(destination)}` : ""}`,
         handleCodeInApp: true,
       });
-      setMessage("A fresh verification link has been sent.");
+      setMessage(localTesting ? "A fresh verification link is available in the Firebase emulator terminal. No email was sent." : "A fresh verification link has been sent.");
     } catch (caught) {
       setError(firebaseErrorMessage(caught));
     }

@@ -93,7 +93,7 @@ test("registration, verification, session protection, logout, and password reset
   ).toBeVisible();
 
   await page.goto("/host/dashboard");
-  await expect(page).toHaveURL("/unauthorized");
+  await expect(page).toHaveURL("/become-a-host");
   await page.goto("/admin");
   await expect(page).toHaveURL("/unauthorized");
 
@@ -106,7 +106,7 @@ test("registration, verification, session protection, logout, and password reset
   await setEmulatorRole(email, "admin");
   await page.goto("/admin");
   await expect(
-    page.getByRole("heading", { name: "Core data foundation" }),
+    page.getByRole("heading", { name: "Bleetary Operations & Control Center" }),
   ).toBeVisible();
 
   await setEmulatorRole(email, "traveler");
@@ -121,7 +121,7 @@ test("registration, verification, session protection, logout, and password reset
   await page.getByRole("button", { name: "Send reset link" }).click();
   await expect(
     page.getByText(
-      "If that email belongs to an account, a reset link is on its way.",
+      "Local testing: no email is sent. If the account exists, open the password reset link in the Firebase emulator terminal.",
     ),
   ).toBeVisible();
 
@@ -144,4 +144,38 @@ test("registration, verification, session protection, logout, and password reset
   await page.getByLabel("Password").fill(secondPassword);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL("/account", { timeout: 15_000 });
+});
+
+
+test("host signup verifies email and returns to the saved application", async ({ page, request }) => {
+  const email = `host-${Date.now()}@example.test`;
+  await page.goto("/become-a-host");
+  await page.getByLabel(/Community or Brand Name/i).fill("Test Travel Community");
+  await page.getByRole("button", { name: /Continue to Audience & Reach/i }).click();
+  await page.getByRole("button", { name: /Continue/i }).click();
+  await page.getByPlaceholder(/What excites you/i).fill("We love sharing adventures and exploring new places together.");
+  await page.getByRole("button", { name: "Bali, Indonesia", exact: true }).click();
+  await page.getByRole("button", { name: /Review/i }).click();
+  await page.getByPlaceholder("e.g. Sarah Jenkins").fill("Test Host");
+  await page.getByPlaceholder("you@domain.com").fill(email);
+  await page.getByPlaceholder("••••••••").fill("Bleetary!Pass1");
+  await page.getByRole("button", { name: "Create Account & Verify Email" }).click();
+  await expect(page).toHaveURL(/verify-email.*next=/);
+  await expect(page.getByText(/Local testing: no email is sent/)).toBeVisible();
+  let code: string | null = null;
+  await expect.poll(async () => code = await findOobCode(request, email, "VERIFY_EMAIL")).not.toBeNull();
+  await page.goto(`/verify-email?oobCode=${code}&next=%2Fbecome-a-host`);
+  await expect(page.getByText("Email verified. Continue to your account.")).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page).toHaveURL("/become-a-host");
+  await expect(page.getByLabel(/Community or Brand Name/i)).toHaveValue("Test Travel Community");
+  await page.getByRole("button", { name: /Continue to Audience & Reach/i }).click();
+  await page.getByRole("button", { name: /Continue/i }).click();
+  await page.getByRole("button", { name: /Review/i }).click();
+  await page.getByRole("button", { name: "Submit Host Application" }).click();
+  await expect(page.getByText(/Application Submitted/i)).toBeVisible();
+  await page.goto("/host/dashboard");
+  await expect(page).toHaveURL("/host/dashboard");
+  await page.goto("/admin");
+  await expect(page).toHaveURL("/unauthorized");
 });

@@ -11,7 +11,7 @@ const MOCK_KEY = "sk_test_mock_key_for_build";
  */
 export function hasRealStripeKey(): boolean {
   const key = process.env.STRIPE_SECRET_KEY;
-  return Boolean(key) && !key!.startsWith("sk_test_mock");
+  return Boolean(key && /^sk_(test|live)_/.test(key) && !/mock|replace|placeholder/i.test(key));
 }
 
 /**

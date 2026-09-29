@@ -22,8 +22,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const webhookSecret =
-    process.env.STRIPE_WEBHOOK_SECRET || "whsec_mock_test_secret";
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret || /replace|mock|placeholder/i.test(webhookSecret)) {
+    return NextResponse.json({ error: "Webhook is not configured." }, { status: 503 });
+  }
   let event: Stripe.Event;
 
   try {
@@ -35,9 +37,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Handle checkout.session.completed
-  if (event.type === "checkout.session.completed") {
+  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata;
+    if (session.payment_status !== "paid") {
+      return NextResponse.json({ received: true, message: "Awaiting payment." });
+    }
 
     if (!metadata || !metadata.departureId || !metadata.travelerUid) {
       // Session was not initiated via our trip booking pipeline
@@ -84,7 +89,15 @@ export async function POST(request: NextRequest) {
     const totalCents = parseInt(totalAmountCents || "0", 10);
     const baseCents = parseInt(basePriceCents || "0", 10);
     const finalBalanceDueDays = parseInt(rawDueDays || "60", 10);
-    const balanceRemainingCents = Math.max(0, totalCents - depositCents);
+    if (!hostUid || !tripId || !currency || !session.payment_intent ||
+        ![guestCount, depositCents, totalCents, baseCents, finalBalanceDueDays].every(Number.isSafeInteger) ||
+        guestCount < 1 || guestCount > 10 || depositCents <= 0 || totalCents < depositCents ||
+        baseCents <= 0 || finalBalanceDueDays < 0 || session.amount_total !== depositCents ||
+        session.currency?.toLowerCase() !== currency.toLowerCase()) {
+      console.error("[Stripe fulfillment rejected]", { sessionId: session.id });
+      return NextResponse.json({ error: "Payment does not match booking." }, { status: 400 });
+    }
+    const balanceRemainingCents = totalCents - depositCents;
 
     const departureRef = db
       .collection(COLLECTIONS.tripDepartures)
@@ -92,11 +105,13 @@ export async function POST(request: NextRequest) {
 
     const bookingRef = db.collection(COLLECTIONS.bookings).doc();
     const scheduleRef = db.collection(COLLECTIONS.paymentSchedules).doc();
-    const paymentRef = db.collection(COLLECTIONS.payments).doc();
+    const paymentRef = db.collection(COLLECTIONS.payments).doc(stripePaymentIntentId);
 
     const now = FieldValue.serverTimestamp();
 
-    await db.runTransaction(async (transaction) => {
+    const created = await db.runTransaction(async (transaction) => {
+      const paymentSnapshot = await transaction.get(paymentRef);
+      if (paymentSnapshot.exists) return false;
       const departureSnapshot = await transaction.get(departureRef);
       if (!departureSnapshot.exists) {
         throw new Error(`Departure ${departureId} does not exist.`);
@@ -104,6 +119,10 @@ export async function POST(request: NextRequest) {
 
       const departureData = departureSnapshot.data() as TripDepartureDocument;
       const currentConfirmed = departureData.confirmedCount || 0;
+      if (currentConfirmed + guestCount > departureData.capacity) {
+        console.error("[Stripe capacity conflict]", { sessionId: session.id, departureId });
+        throw new Error("Paid booking requires capacity review.");
+      }
 
       // 1. Atomically increment confirmed seat count
       transaction.update(departureRef, {
@@ -201,13 +220,15 @@ export async function POST(request: NextRequest) {
         paymentType: "deposit" as const,
         status: "succeeded" as const,
         stripePaymentIntentId,
-        stripeChargeId: session.id,
+        stripeChargeId: null,
         paidAt: now,
         failureReason: null,
         createdAt: now,
         updatedAt: now,
       });
+      return true;
     });
+    if (!created) return NextResponse.json({ received: true, message: "Payment already processed." });
 
     // 6. Record audit trail
     await logAuditEvent({

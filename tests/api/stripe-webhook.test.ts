@@ -50,7 +50,7 @@ vi.mock("@/lib/firebase-admin", () => ({
               get: mockPaymentQueryGet,
             }),
           }),
-          doc: () => ({ id: "payment-doc-id" }),
+          doc: (id?: string) => ({ id: id || "payment-doc-id" }),
         };
       }
       if (col === "users") {
@@ -87,6 +87,7 @@ import { logAuditEvent } from "@/lib/db/audit";
 describe("POST /api/webhooks/stripe", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_configured";
   });
 
   it("returns 400 if stripe-signature header is missing", async () => {
@@ -126,6 +127,9 @@ describe("POST /api/webhooks/stripe", () => {
       data: {
         object: {
           id: "cs_123",
+          payment_status: "paid",
+          amount_total: 60000,
+          currency: "usd",
           payment_intent: "pi_123",
           metadata: {
             travelerUid: "user-123",
@@ -148,7 +152,7 @@ describe("POST /api/webhooks/stripe", () => {
     mockConstructEvent.mockReturnValue(sessionEvent);
     mockPaymentQueryGet.mockResolvedValue({ empty: true });
 
-    mockTransactionGet.mockResolvedValue({
+    mockTransactionGet.mockResolvedValueOnce({ exists: false }).mockResolvedValueOnce({
       exists: true,
       data: () => ({
         capacity: 10,
