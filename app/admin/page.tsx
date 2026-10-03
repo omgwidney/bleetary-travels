@@ -15,7 +15,7 @@ import { ShieldCheck } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const session = await requireRole(["admin"], "/login?next=/admin");
+  const session = await requireRole(["admin"], "/admin");
 
   const [rawMetrics, rawApplications, rawTrips, rawAuditEvents] = await Promise.all([
     getAdminOverviewMetrics(),

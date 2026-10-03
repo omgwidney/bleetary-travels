@@ -38,6 +38,8 @@ export function safeNextPath(value: string | undefined): string | null {
     const base = new URL("https://bleetary.local");
     const target = new URL(value, base);
     if (target.origin !== base.origin) return null;
+    // Sending a signed-in user back to the login page would strand them there.
+    if (target.pathname === "/login") return null;
     return `${target.pathname}${target.search}${target.hash}`;
   } catch {
     return null;
