@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -231,9 +232,10 @@ export default function AdminPortal({
               Trip Catalog & Manifest Operations
             </h2>
             <p className="text-xs text-gray-500">
-              Control public trip visibility, toggle publication states, and inspect real-time passenger manifests.
+              Create trips with itineraries and hosts, manage visibility, and inspect passenger manifests.
             </p>
           </div>
+          <Link href="/admin/trips/new" className="inline-flex rounded-xl bg-teal-700 px-5 py-3 text-sm font-bold text-white hover:bg-teal-800">+ Add trip</Link>
           <TripOperationsManager
             initialTrips={trips}
             onOpenManifest={(tripId) => {

@@ -79,6 +79,7 @@ export default function TripCard({ trip, hostProfile, departure }: TripCardProps
           {heroImage ? (
             <Image
               src={heroImage}
+              unoptimized={heroImage.includes("trip-originals") }
               alt={trip.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

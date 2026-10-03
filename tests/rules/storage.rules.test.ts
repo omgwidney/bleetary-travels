@@ -65,3 +65,20 @@ describe("Storage rules", () => {
     );
   });
 });
+
+
+describe("Original trip uploads", () => {
+  it("preserves admin uploads larger than the old 10 MiB limit and forbids overwrite", async () => {
+    const storage = environment.authenticatedContext("admin-original", { role: "admin" }).storage();
+    const image = ref(storage, "published/trip-originals/large.png");
+    const metadata = { contentType: "image/png", customMetadata: { ownerUid: "admin-original" } };
+    await assertSucceeds(uploadBytes(image, new Uint8Array(11 * 1024 * 1024), metadata));
+    await assertFails(uploadBytes(image, new Uint8Array([1]), metadata));
+  });
+  it("rejects non-admin uploads and unsupported file types", async () => {
+    const traveler = environment.authenticatedContext("traveler-original", { role: "traveler" }).storage();
+    await assertFails(uploadBytes(ref(traveler, "published/trip-originals/denied.png"), new Uint8Array([1]), { contentType: "image/png", customMetadata: { ownerUid: "traveler-original" } }));
+    const admin = environment.authenticatedContext("admin-original", { role: "admin" }).storage();
+    await assertFails(uploadBytes(ref(admin, "published/trip-originals/denied.svg"), new Uint8Array([1]), { contentType: "image/svg+xml", customMetadata: { ownerUid: "admin-original" } }));
+  });
+});

@@ -308,6 +308,33 @@ export async function updateTripPublicationStatus(
     throw new Error("Trip not found.");
   }
 
+  const tripData = tripDoc.data()!;
+  if (tripData.managedDepartureId) {
+    const itineraryRef = db.collection("itineraries").doc(tripData.itineraryId);
+    const departureRef = db.collection("tripDepartures").doc(tripData.managedDepartureId);
+    const destinationRef = db.collection("destinations").doc(tripData.destinationId);
+    if (status === "published") {
+      const host = await getAdminAuth().getUser(tripData.hostUid);
+      if (host.disabled || !host.emailVerified || !["host", "admin"].includes(host.customClaims?.role)) throw new Error("An active approved host is required before publishing.");
+    }
+    await db.runTransaction(async tx => {
+      const [itinerary, departure, destination, profile] = await Promise.all([
+        tx.get(itineraryRef), tx.get(departureRef), tx.get(destinationRef), tx.get(db.collection("hostProfiles").doc(tripData.hostUid)),
+      ]);
+      if (!itinerary.exists || !departure.exists || !destination.exists) throw new Error("Trip itinerary, departure or destination is missing.");
+      if (status === "published" && (profile.data()?.status !== "published" || (!tripData.managedDestination && destination.data()?.status !== "published"))) throw new Error("Publish the host profile and destination first.");
+      if (status === "published" && departure.data()!.startDate.toMillis() < new Date(new Date().toISOString().slice(0, 10)).getTime()) throw new Error("The departure date has passed.");
+      const now = FieldValue.serverTimestamp();
+      const update = { status, publishedAt: status === "published" ? now : null, updatedAt: now };
+      tx.update(tripRef, update);
+      tx.update(itineraryRef, update);
+      tx.update(departureRef, update);
+      if (status === "published" && tripData.managedDestination) tx.update(destinationRef, update);
+      tx.create(db.collection("auditEvents").doc(), { actorUid, action: "trip.status_updated", targetType: "trips", targetId: tripId, metadata: { status }, reason: reason || `Trip status updated to ${status}`, createdAt: now });
+    });
+    return;
+  }
+
   const now = FieldValue.serverTimestamp();
   await tripRef.update({
     status,

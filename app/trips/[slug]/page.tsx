@@ -169,6 +169,7 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
           {heroImage && (
             <Image
               src={heroImage}
+              unoptimized={heroImage.includes("trip-originals") }
               alt={trip.title}
               fill
               sizes="100vw"
@@ -301,6 +302,7 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
                     >
                       <Image
                         src={src}
+                        unoptimized={src.includes("trip-originals")}
                         alt={`${trip.title} photo ${i + 2}`}
                         fill
                         sizes="(max-width: 640px) 50vw, 33vw"
