@@ -5,7 +5,11 @@ import { Calendar, Check, Clock, MapPin, Users, X } from "lucide-react";
 import { notFound } from "next/navigation";
 import Footer from "@/components/layout/Footer";
 import Nav from "@/components/layout/Nav";
-import { getTripBySlug, getTripDepartures } from "@/lib/db/trips";
+import {
+  getPublishedItinerary,
+  getTripBySlug,
+  getTripDepartures,
+} from "@/lib/db/trips";
 import { getHostProfile } from "@/lib/db/hosts";
 import { getDestinationById } from "@/lib/db/destinations";
 import { formatDate, formatDateRange, formatCents } from "@/lib/format";
@@ -135,10 +139,11 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
   const trip = await getTripBySlug(slug);
   if (!trip) notFound();
 
-  const [hostProfile, departures, destination] = await Promise.all([
+  const [hostProfile, departures, destination, itinerary] = await Promise.all([
     getHostProfile(trip.hostUid),
     getTripDepartures(trip.id),
     getDestinationById(trip.destinationId),
+    getPublishedItinerary(trip.itineraryId),
   ]);
 
   const heroImage = trip.imagePaths[0] ?? null;
@@ -311,6 +316,49 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Day-by-day itinerary */}
+            {itinerary && itinerary.days.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 mb-4">
+                  Day by day
+                </h2>
+                <ol className="space-y-4">
+                  {itinerary.days.map((day) => (
+                    <li
+                      key={day.dayNumber}
+                      className="rounded-2xl border border-gray-100 bg-white p-5"
+                    >
+                      <p className="text-xs font-bold uppercase tracking-wider text-teal-700">
+                        Day {day.dayNumber}
+                      </p>
+                      <h3 className="mt-1 text-lg font-bold text-gray-900">
+                        {day.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-gray-600">
+                        {day.description}
+                      </p>
+                      {day.activities.length > 0 && (
+                        <ul className="mt-3 space-y-1.5">
+                          {day.activities.map((activity, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-2 text-sm text-gray-700"
+                            >
+                              <Check
+                                size={16}
+                                className="mt-0.5 shrink-0 text-teal-600"
+                              />
+                              <span>{activity.title}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ol>
               </div>
             )}
 

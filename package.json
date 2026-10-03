@@ -15,7 +15,7 @@
     "test:watch": "vitest",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-bleetary \"vitest run --config vitest.rules.config.mts\"",
     "test:auth-e2e": "firebase emulators:exec --only auth,firestore,storage --project demo-bleetary \"playwright test --config playwright.auth.config.ts\"",
-    "test:e2e": "playwright test",
+    "test:e2e": "firebase emulators:exec --only auth,firestore,storage --project demo-bleetary \"FIREBASE_ADMIN_PROJECT_ID=demo-bleetary FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npm run seed && playwright test\"",
     "check": "npm run lint && npm run typecheck && npm run test",
     "audit:production": "npm audit --omit=dev --audit-level=critical",
     "admin:bootstrap": "node scripts/bootstrap-admin.mjs",

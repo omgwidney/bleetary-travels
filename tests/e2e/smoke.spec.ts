@@ -32,21 +32,23 @@ test("trip search preserves the query and narrows the prototype catalog", async 
   ).toBeVisible();
 });
 
-test("host quiz reaches the contact step without sending data", async ({
+test("host application moves from audience to reach without sending data", async ({
   page,
 }) => {
   await page.goto("/become-a-host");
 
-  await page.getByRole("button", { name: "👥 Yes" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Tell us about your audience" }),
+  ).toBeVisible();
+  await page.getByLabel(/Community or Brand Name/).fill("Nomad Creatives Club");
+  await page.getByRole("button", { name: "newsletter" }).click();
   await page
-    .getByRole("button", { name: /It's a side project/ })
+    .getByRole("button", { name: /Continue to Audience & Reach/ })
     .click();
-  await page.getByRole("button", { name: "Next →" }).click();
 
   await expect(
-    page.getByRole("heading", { name: "You're almost in! 🎉" }),
+    page.getByRole("heading", { name: "Audience size & social handles" }),
   ).toBeVisible();
-  await expect(page.getByLabel("Your name")).toBeVisible();
 });
 
 test("unknown routes show the branded not-found page", async ({ page }) => {
@@ -54,6 +56,6 @@ test("unknown routes show the branded not-found page", async ({ page }) => {
 
   expect(response?.status()).toBe(404);
   await expect(
-    page.getByRole("heading", { name: "This route is off the map" }),
+    page.getByRole("heading", { name: "Looks like you've wandered off the trail" }),
   ).toBeVisible();
 });

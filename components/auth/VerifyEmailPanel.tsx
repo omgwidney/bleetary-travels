@@ -17,6 +17,7 @@ import {
 } from "@/components/auth/auth-ui";
 
 const POLL_INTERVAL_MS = 4000;
+const appliedActionCodes = new Map<string, Promise<void>>();
 
 export default function VerifyEmailPanel({
   email,
@@ -44,7 +45,15 @@ export default function VerifyEmailPanel({
     if (!oobCode) return;
 
     let active = true;
-    applyActionCode(auth, oobCode)
+    // Action codes are single-use. Share one request per code so a re-run
+    // effect (React Strict Mode, remounts) doesn't consume it twice and then
+    // report the link as already used.
+    let request = appliedActionCodes.get(oobCode);
+    if (!request) {
+      request = applyActionCode(auth, oobCode);
+      appliedActionCodes.set(oobCode, request);
+    }
+    request
       .then(() => {
         if (active) setMessage("Email verified. Continue to your account.");
       })

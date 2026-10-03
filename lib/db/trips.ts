@@ -8,7 +8,11 @@ import "server-only";
 
 import { getAdminDb } from "@/lib/firebase-admin";
 import { COLLECTIONS } from "@/lib/data-model";
-import type { TripDocument, TripDepartureDocument } from "@/lib/db/schema";
+import type {
+  ItineraryDocument,
+  TripDocument,
+  TripDepartureDocument,
+} from "@/lib/db/schema";
 
 // ─── Typed document helpers ───────────────────────────────────────────────
 
@@ -60,6 +64,21 @@ export async function getTripBySlug(slug: string): Promise<TripRow | null> {
 
   if (snapshot.empty) return null;
   return toTripRow(snapshot.docs[0]);
+}
+
+/**
+ * Returns a trip's itinerary if it is published, or null otherwise.
+ */
+export async function getPublishedItinerary(
+  itineraryId: string,
+): Promise<ItineraryDocument | null> {
+  if (!itineraryId) return null;
+  const doc = await getAdminDb()
+    .collection(COLLECTIONS.itineraries)
+    .doc(itineraryId)
+    .get();
+  const itinerary = doc.data() as ItineraryDocument | undefined;
+  return itinerary?.status === "published" ? itinerary : null;
 }
 
 /**

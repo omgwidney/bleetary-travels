@@ -10,6 +10,9 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: "list",
+  // The dev server compiles each route on first request, which often takes
+  // longer than the 5s default when a step is the first to hit a route.
+  expect: { timeout: 30_000 },
   use: {
     baseURL,
     trace: "retain-on-failure",
