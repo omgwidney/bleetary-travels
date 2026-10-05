@@ -59,3 +59,28 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run test:auth-e2e
+
+  # Firebase App Hosting deploys from the `production` branch. Advance it to
+  # the tested commit only after every check above has passed on main.
+  promote:
+    name: Promote to production
+    runs-on: ubuntu-latest
+    needs: [verify, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: promote-production
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fast-forward production
+        run: |
+          git fetch origin production
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/production; then
+            echo "production already includes $GITHUB_SHA (a newer run promoted it); nothing to do."
+            exit 0
+          fi
+          git push origin "$GITHUB_SHA:refs/heads/production"
